@@ -21,8 +21,8 @@ data = np.squeeze(obs.data)
 best_periods = []
 for i in range(int(0.1 * nchans), int(0.9 * nchans)):
     channeled = data[:, i]
-    time_series = riptide.TimeSeries.from_numpy_array(channeled, tsamp = obs.header['tsamp'])
-    ts, pgram = riptide.ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=260)
+    time_series = TimeSeries.from_numpy_array(channeled, tsamp = obs.header['tsamp'])
+    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=260)
     best_periods.append(pgram.periods[np.argmax(pgram.snrs.max(axis=1))])
 
 ranked = pd.Series(np.round(np.array(best_periods), 4)).value_counts()
