@@ -1,7 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+
 import argparse
 import time
+
 from blimpy import Waterfall
 from riptide import TimeSeries, ffa_search
 
