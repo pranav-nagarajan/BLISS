@@ -11,16 +11,17 @@ from riptide import TimeSeries, ffa_search
 
 start = time.time()
 parser = argparse.ArgumentParser()
-parser.add_argument('filename', type = str, help = "Location of data file.")
+parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
+parser.add_argument('background', type = str, help = "Location of 'OFF' data file.")
 parser.add_argument('--cutoff', type = int, default = 40, help = 'SNR cutoff value.')
 parser.add_argument('--alias', type = int, default = 1, help = 'Number of periods to check for harmonics.')
 args = parser.parse_args()
-filename = args.filename
+on_file = args.signal
+off_file = args.background
 cutoff = args.cutoff
 num_periods = args.alias
 
-obs = Waterfall(filename)
-obs.info()
+obs = Waterfall(on_file)
 obs.plot_waterfall()
 
 nchans = obs.header['nchans']
@@ -55,14 +56,51 @@ for r in ranked.keys()[0:num_periods]:
         if not harmonics[i] and check and close:
             harmonics[i] = True
 
-data = list(zip(periods, frequencies, snrs))
+periods = np.array(periods)
+frequencies = np.array(frequencies)
+snrs = np.array(snrs)
+
+background = Waterfall(off_file)
+background.plot_waterfall()
+
+back_chans = background.header['nchans']
+back_data = np.squeeze(background.data)
+
+back_periods = []
+back_frequencies = []
+
+for i in range(int(0.1 * back_chans), int(0.9 * back_chans)):
+
+    time_series = TimeSeries.from_numpy_array(back_data[:, i], tsamp = background.header['tsamp'])
+    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=26)
+
+    mask = pgram.snrs.T[0] >= cutoff
+    back_periods.extend(pgram.periods[mask])
+    back_frequencies.extend(np.ones(len(pgram.periods[mask])) * background.freqs[i])
+
+back_periods = np.array(back_periods)
+back_frequencies = np.array(back_frequencies)
+
+indicator = np.zeros(len(periods))
+counter = 0
+for (po, fo) in zip(periods, frequencies):
+    for (pb, fb) in zip(back_periods, back_frequencies):
+        if indicator[counter] == 0 and abs(po - pb) <= 1e-3 and abs(fo - fb) <= 1e-3:
+            indicator[counter] = 1
+    counter += 1
+
+full_signal = list(zip(periods, frequencies, snrs))
 on = []
 alias = []
+off = []
 for i in range(len(harmonics)):
     if harmonics[i]:
-        alias.append(data[i])
+        alias.append(full_signal[i])
     else:
-        on.append(data[i])
+        if indicator[i]:
+            off.append(full_signal[i])
+        else:
+            on.append(full_signal[i])
 
 cmap = plt.cm.viridis
 norm = matplotlib.colors.Normalize(vmin = min(snrs), vmax = max(snrs))
@@ -70,6 +108,7 @@ norm = matplotlib.colors.Normalize(vmin = min(snrs), vmax = max(snrs))
 plt.figure(figsize = (8, 6))
 plt.scatter(list(zip(*on))[0], list(zip(*on))[1], c = cmap(norm(list(zip(*on))[2])), marker = 'o')
 plt.scatter(list(zip(*alias))[0], list(zip(*alias))[1], c = cmap(norm(list(zip(*alias))[2])), marker = '+')
+plt.scatter(list(zip(*off))[0], list(zip(*off))[1], c = cmap(norm(list(zip(*off))[2])), marker = '^')
 cbar = plt.colorbar(plt.cm.ScalarMappable(cmap = cmap, norm = norm))
 plt.xlabel('Periods')
 plt.ylabel('Frequencies')
