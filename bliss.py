@@ -22,29 +22,24 @@ cutoff = args.cutoff
 num_periods = args.alias
 
 obs = Waterfall(on_file)
-obs.plot_waterfall()
-
-nchans = obs.header['nchans']
 data = np.squeeze(obs.data)
+freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
 
 periods = []
 frequencies = []
 snrs = []
 
 best_periods = []
-for i in range(int(0.1 * nchans), int(0.9 * nchans)):
+for i in range(int(0.1 * obs.header['nchans']), int(0.9 * obs.header['nchans'])):
 
     time_series = TimeSeries.from_numpy_array(data[:, i], tsamp = obs.header['tsamp'])
     ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=260)
-
-    if i == int(0.5 * nchans):
-        pgram.display()
 
     best_periods.append(pgram.periods[np.argmax(pgram.snrs.max(axis=1))])
 
     mask = pgram.snrs.T[0] >= cutoff
     periods.extend(pgram.periods[mask])
-    frequencies.extend(np.ones(len(pgram.periods[mask])) * obs.freqs[i])
+    frequencies.extend(np.ones(len(pgram.periods[mask])) * freqs[i])
     snrs.extend(pgram.snrs.T[0][mask])
 
 ranked = pd.Series(np.round(np.array(best_periods), 4)).value_counts()
@@ -61,22 +56,20 @@ frequencies = np.array(frequencies)
 snrs = np.array(snrs)
 
 background = Waterfall(off_file)
-background.plot_waterfall()
-
-back_chans = background.header['nchans']
 back_data = np.squeeze(background.data)
+back_freqs = np.array([background.header['fch1'] + i * background.header['foff'] for i in range(background.header['nchans'])])
 
 back_periods = []
 back_frequencies = []
 
-for i in range(int(0.1 * back_chans), int(0.9 * back_chans)):
+for i in range(int(0.1 * background.header['nchans']), int(0.9 * background.header['nchans'])):
 
     time_series = TimeSeries.from_numpy_array(back_data[:, i], tsamp = background.header['tsamp'])
     ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=26)
 
     mask = pgram.snrs.T[0] >= cutoff
     back_periods.extend(pgram.periods[mask])
-    back_frequencies.extend(np.ones(len(pgram.periods[mask])) * background.freqs[i])
+    back_frequencies.extend(np.ones(len(pgram.periods[mask])) * back_freqs[i])
 
 back_periods = np.array(back_periods)
 back_frequencies = np.array(back_frequencies)
