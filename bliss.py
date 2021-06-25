@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors
 import pandas as pd
 
 import argparse
@@ -19,6 +20,9 @@ cutoff = args.cutoff
 num_periods = args.alias
 
 obs = Waterfall(filename)
+obs.info()
+obs.plot_waterfall()
+
 nchans = obs.header['nchans']
 data = np.squeeze(obs.data)
 
@@ -50,6 +54,27 @@ for r in ranked.keys()[0:num_periods]:
         close = (abs((periods[i] / r) - round(periods[i] / r)) <= 1e-3)
         if not harmonics[i] and check and close:
             harmonics[i] = True
+
+data = list(zip(periods, frequencies, snrs))
+on = []
+alias = []
+for i in range(len(harmonics)):
+    if harmonics[i]:
+        alias.append(data[i])
+    else:
+        on.append(data[i])
+
+cmap = plt.cm.viridis
+norm = matplotlib.colors.Normalize(vmin = min(snrs), vmax = max(snrs))
+
+plt.figure(figsize = (8, 6))
+plt.scatter(list(zip(*on))[0], list(zip(*on))[1], c = cmap(norm(list(zip(*on))[2])), marker = 'o')
+plt.scatter(list(zip(*alias))[0], list(zip(*alias))[1], c = cmap(norm(list(zip(*alias))[2])), marker = '+')
+cbar = plt.colorbar(plt.cm.ScalarMappable(cmap = cmap, norm = norm))
+plt.xlabel('Periods')
+plt.ylabel('Frequencies')
+cbar.set_label('SNR', rotation = 270)
+plt.show();
 
 end = time.time()
 print('Best Period: ', ranked.keys()[0])
