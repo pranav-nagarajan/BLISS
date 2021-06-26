@@ -109,6 +109,7 @@ cbar = plt.colorbar(plt.cm.ScalarMappable(cmap = cmap, norm = norm))
 plt.xlabel('Periods')
 plt.ylabel('Frequencies')
 cbar.set_label('SNR', rotation = 270)
+plt.savefig('output.png')
 plt.show();
 
 end = time.time()
