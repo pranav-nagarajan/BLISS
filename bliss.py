@@ -99,9 +99,12 @@ cmap = plt.cm.viridis
 norm = matplotlib.colors.Normalize(vmin = min(snrs), vmax = max(snrs))
 
 plt.figure(figsize = (8, 6))
-plt.scatter(list(zip(*on))[0], list(zip(*on))[1], c = cmap(norm(list(zip(*on))[2])), marker = 'o')
-plt.scatter(list(zip(*alias))[0], list(zip(*alias))[1], c = cmap(norm(list(zip(*alias))[2])), marker = '+')
-plt.scatter(list(zip(*off))[0], list(zip(*off))[1], c = cmap(norm(list(zip(*off))[2])), marker = '^')
+if len(on) > 0:
+    plt.scatter(list(zip(*on))[0], list(zip(*on))[1], c = cmap(norm(list(zip(*on))[2])), marker = 'o')
+if len(alias) > 0:
+    plt.scatter(list(zip(*alias))[0], list(zip(*alias))[1], c = cmap(norm(list(zip(*alias))[2])), marker = '+')
+if len(off) > 0:
+    plt.scatter(list(zip(*off))[0], list(zip(*off))[1], c = cmap(norm(list(zip(*off))[2])), marker = '^')
 cbar = plt.colorbar(plt.cm.ScalarMappable(cmap = cmap, norm = norm))
 plt.xlabel('Periods')
 plt.ylabel('Frequencies')
