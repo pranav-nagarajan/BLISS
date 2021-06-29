@@ -5,6 +5,7 @@ import pandas as pd
 
 import argparse
 import time
+from tqdm import tqdm
 
 from blimpy import Waterfall
 from riptide import TimeSeries, ffa_search
@@ -24,13 +25,14 @@ num_periods = args.alias
 obs = Waterfall(on_file)
 data = np.squeeze(obs.data)
 freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
+print("Progress: Read ON file.")
 
 periods = []
 frequencies = []
 snrs = []
 
 best_periods = []
-for i in range(int(0.1 * obs.header['nchans']), int(0.9 * obs.header['nchans'])):
+for i in tqdm(range(int(0.1 * obs.header['nchans']), int(0.9 * obs.header['nchans']))):
 
     time_series = TimeSeries.from_numpy_array(data[:, i], tsamp = obs.header['tsamp'])
     ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=260)
@@ -58,11 +60,12 @@ snrs = np.array(snrs)
 background = Waterfall(off_file)
 back_data = np.squeeze(background.data)
 back_freqs = np.array([background.header['fch1'] + i * background.header['foff'] for i in range(background.header['nchans'])])
+print("Progress: Read OFF file.")
 
 back_periods = []
 back_frequencies = []
 
-for i in range(int(0.1 * background.header['nchans']), int(0.9 * background.header['nchans'])):
+for i in tqdm(range(int(0.1 * background.header['nchans']), int(0.9 * background.header['nchans']))):
 
     time_series = TimeSeries.from_numpy_array(back_data[:, i], tsamp = background.header['tsamp'])
     ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=26)
