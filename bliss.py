@@ -13,7 +13,7 @@ from riptide import TimeSeries, ffa_search
 start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
-parser.add_argument('background', type = str, help = "Location of 'OFF' data file.")
+parser.add_argument('--background', type = str, default = None, help = "Location of 'OFF' data file.")
 parser.add_argument('--cutoff', type = int, default = 40, help = 'SNR cutoff value.')
 parser.add_argument('--alias', type = int, default = 1, help = 'Number of periods to check for harmonics.')
 args = parser.parse_args()
@@ -57,33 +57,35 @@ periods = np.array(periods)
 frequencies = np.array(frequencies)
 snrs = np.array(snrs)
 
-background = Waterfall(off_file)
-back_data = np.squeeze(background.data)
-back_freqs = np.array([background.header['fch1'] + i * background.header['foff'] for i in range(background.header['nchans'])])
-print("Progress: Read OFF file.")
-
-back_periods = []
-back_frequencies = []
-
-for i in tqdm(range(int(0.1 * background.header['nchans']), int(0.9 * background.header['nchans']))):
-
-    time_series = TimeSeries.from_numpy_array(back_data[:, i], tsamp = background.header['tsamp'])
-    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=26)
-
-    mask = pgram.snrs.T[0] >= cutoff
-    back_periods.extend(pgram.periods[mask])
-    back_frequencies.extend(np.ones(len(pgram.periods[mask])) * back_freqs[i])
-
-back_periods = np.array(back_periods)
-back_frequencies = np.array(back_frequencies)
-
 indicator = np.zeros(len(periods))
-counter = 0
-for (po, fo) in zip(periods, frequencies):
-    for (pb, fb) in zip(back_periods, back_frequencies):
-        if indicator[counter] == 0 and abs(po - pb) <= 1e-3 and abs(fo - fb) <= 1e-3:
-            indicator[counter] = 1
-    counter += 1
+if off_file is not None:
+
+    background = Waterfall(off_file)
+    back_data = np.squeeze(background.data)
+    back_freqs = np.array([background.header['fch1'] + i * background.header['foff'] for i in range(background.header['nchans'])])
+    print("Progress: Read OFF file.")
+
+    back_periods = []
+    back_frequencies = []
+
+    for i in tqdm(range(int(0.1 * background.header['nchans']), int(0.9 * background.header['nchans']))):
+
+        time_series = TimeSeries.from_numpy_array(back_data[:, i], tsamp = background.header['tsamp'])
+        ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=1.25, bins_min=2, bins_max=26)
+
+        mask = pgram.snrs.T[0] >= cutoff
+        back_periods.extend(pgram.periods[mask])
+        back_frequencies.extend(np.ones(len(pgram.periods[mask])) * back_freqs[i])
+
+        back_periods = np.array(back_periods)
+        back_frequencies = np.array(back_frequencies)
+
+        counter = 0
+        for (po, fo) in zip(periods, frequencies):
+            for (pb, fb) in zip(back_periods, back_frequencies):
+                if indicator[counter] == 0 and abs(po - pb) <= 1e-3 and abs(fo - fb) <= 1e-3:
+                    indicator[counter] = 1
+            counter += 1
 
 full_signal = list(zip(periods, frequencies, snrs))
 on = []
