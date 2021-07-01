@@ -5,7 +5,6 @@ import pandas as pd
 
 import argparse
 import time
-from tqdm import tqdm
 import multiprocessing as mp
 
 from blimpy import Waterfall
@@ -31,7 +30,7 @@ def periodic_analysis(data, freqs, start, stop, cutoff, on = True):
     snrs = []
     best_periods = []
 
-    for i in tqdm(range(int(start * obs.header['nchans']), int(stop * obs.header['nchans']))):
+    for i in range(int(start * obs.header['nchans']), int(stop * obs.header['nchans'])):
 
         time_series = TimeSeries.from_numpy_array(data[:, i], tsamp = obs.header['tsamp'])
         ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=100, bins_min=2, bins_max=260)
@@ -44,13 +43,8 @@ def periodic_analysis(data, freqs, start, stop, cutoff, on = True):
         if on:
             snrs.extend(pgram.snrs.T[0][mask])
 
-    periods = np.array(periods)
-    frequencies = np.array(frequencies)
     if not on:
         return periods, frequencies
-
-    snrs = np.array(snrs)
-    best_periods = np.array(best_periods)
     return periods, frequencies, snrs, best_periods
 
 
@@ -72,8 +66,8 @@ def find_harmonics(best_periods, num_periods):
 def compare_on_off(periods, frequencies, back_periods, back_frequencies):
     """Compares ON and OFF files."""
     indicator = np.zeros(len(periods))
-    counter = 0
 
+    counter = 0
     for (po, fo) in zip(periods, frequencies):
         for (pb, fb) in zip(back_periods, back_frequencies):
             if indicator[counter] == 0 and abs(po - pb) <= 1e-3 and abs(fo - fb) <= 1e-3:
@@ -81,6 +75,22 @@ def compare_on_off(periods, frequencies, back_periods, back_frequencies):
         counter += 1
 
     return indicator
+
+
+def concat_helper(results):
+    """Concatenates results from worker processes."""
+    periods = []
+    frequencies = []
+    snrs = []
+    best_periods = []
+
+    for package in results:
+        periods.extend(package[0])
+        frequencies.extend(package[1])
+        snrs.extend(package[2])
+        best_periods.extend(package[3])
+
+    return [np.array(periods), np.array(frequencies), np.array(snrs), np.array(best_periods)]
 
 
 def plot_helper(periods, frequencies, snrs, harmonics, indicator):
@@ -126,9 +136,8 @@ print("Progress: Read ON file.")
 
 pool = mp.Pool(mp.cpu_count())
 on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, True) for i in range(1, 9)]
-on_results = np.array(pool.starmap(periodic_analysis, on_iterables))
-print(on_results.shape)
-on_results = np.concatenate(on_results, axis = 1)
+on_results = pool.starmap(periodic_analysis, on_iterables)
+on_results = concat_helper(on_results)
 print("Progress: Processed ON file.")
 
 ranked, harmonics = find_harmonics(on_results[3], num_periods)
@@ -142,7 +151,7 @@ if off_file is not None:
 
     off_iterables = [(background_data, background_freqs, 0.1 * i, 0.1 * (i + 1), cutoff, False) for i in range(1, 9)]
     off_results = pool.map(periodic_analysis, off_iterables)
-    off_results = np.concatenate(off_results, axis = 1)
+    off_results = concat_helper(off_results)
     print("Progress: Processed OFF file.")
 
     indicator = compare_on_off(on_results[0], on_results[1], off_results[0], off_results[1])
