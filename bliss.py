@@ -124,9 +124,10 @@ data = np.squeeze(obs.data)
 freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
 print("Progress: Read ON file.")
 
-pool = mp.Pool()
+pool = mp.Pool(mp.cpu_count())
 on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, True) for i in range(1, 9)]
-on_results = pool.map(periodic_analysis, on_iterables)
+on_results = np.array(pool.starmap(periodic_analysis, on_iterables))
+print(on_results.shape)
 on_results = np.concatenate(on_results, axis = 1)
 print("Progress: Processed ON file.")
 
