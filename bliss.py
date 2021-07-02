@@ -48,7 +48,7 @@ def periodic_analysis(data, freqs, start, stop, cutoff, on = True):
     return periods, frequencies, snrs, best_periods
 
 
-def find_harmonics(best_periods, num_periods):
+def find_harmonics(periods, best_periods, num_periods):
     """Finds and labels harmonics in periodograms."""
     harmonics = np.zeros(len(periods), dtype = bool)
 
@@ -140,7 +140,7 @@ on_results = pool.starmap(periodic_analysis, on_iterables)
 on_results = concat_helper(on_results)
 print("Progress: Processed ON file.")
 
-ranked, harmonics = find_harmonics(on_results[3], num_periods)
+ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
 
 if off_file is not None:
 
@@ -161,6 +161,8 @@ else:
     indicator = np.zeros(len(on_results[0]))
 
 plot_helper(on_results[0], on_results[1], on_results[2], harmonics, indicator)
+pool.close()
+pool.join()
 
 end = time.time()
 print('Best Period: ', ranked.keys()[0])
