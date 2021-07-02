@@ -135,7 +135,8 @@ freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs
 print("Progress: Read ON file.")
 
 pool = mp.Pool(mp.cpu_count())
-on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, True) for i in range(1, 9)]
+divided = np.linspace(0.1, 0.9, mp.cpu_count())
+on_iterables = [(data, freqs, divided[i], divided[i + 1], cutoff, True) for i in range(len(divided) - 1)]
 on_results = pool.starmap(periodic_analysis, on_iterables)
 on_results = concat_helper(on_results)
 print("Progress: Processed ON file.")
@@ -149,7 +150,7 @@ if off_file is not None:
     background_freqs = np.array([background.header['fch1'] + i * background.header['foff'] for i in range(background.header['nchans'])])
     print("Progress: Read OFF file.")
 
-    off_iterables = [(background_data, background_freqs, 0.1 * i, 0.1 * (i + 1), cutoff, False) for i in range(1, 9)]
+    off_iterables = [(background_data, background_freqs, divided[i], divided[i + 1], cutoff, False) for i in range(len(divided) - 1)]
     off_results = pool.map(periodic_analysis, off_iterables)
     off_results = concat_helper(off_results)
     print("Progress: Processed OFF file.")
