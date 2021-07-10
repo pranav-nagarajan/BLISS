@@ -69,14 +69,14 @@ def find_harmonics(periods, best_periods, num_periods):
 def compare_on_off(on_data, off_data, freqs, cutoff):
     """Compares ON and OFF files."""
 
-    average_on = on_data[0][0]
+    average_on = on_data[0]
     for i in range(len(on_data)):
-        average_on += on_data[i][0]
+        average_on += on_data[i]
     average_on = average_on / len(on_data)
 
-    average_off = off_data[0][0]
+    average_off = off_data[0]
     for i in range(len(off_data)):
-        average_off += off_data[i][0]
+        average_off += off_data[i]
     average_off = average_off / len(off_data)
 
     ignore = []
@@ -148,11 +148,12 @@ if off_file is not None:
     print("Progress: Read OFF file.")
 
     ignore_chans = compare_on_off(data, background_data, freqs, cutoff)
+    print(ignore_chans)
     on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, ignore_chans, True) for i in range(1, 9)]
     print("Progress: Processed OFF file.")
 
 else:
-    
+
     on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, [], True) for i in range(1, 9)]
 
 on_results = pool.starmap(periodic_analysis, on_iterables)
