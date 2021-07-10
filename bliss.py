@@ -23,7 +23,7 @@ cutoff = args.cutoff
 num_periods = args.alias
 
 
-def periodic_analysis(data, freqs, start, stop, cutoff, on = True):
+def periodic_analysis(data, freqs, start, stop, cutoff, ignore_chans, on = True):
     """Runs FFA on a blimpy Waterfall object."""
     periods = []
     frequencies = []
@@ -32,16 +32,19 @@ def periodic_analysis(data, freqs, start, stop, cutoff, on = True):
 
     for i in range(int(start * obs.header['nchans']), int(stop * obs.header['nchans'])):
 
-        time_series = TimeSeries.from_numpy_array(data[:, i], tsamp = obs.header['tsamp'])
-        ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=100, bins_min=2, bins_max=260)
-        if on:
-            best_periods.append(pgram.periods[np.argmax(pgram.snrs.max(axis=1))])
+        if freqs[i] in ignore_chans:
+            pass
 
-        mask = pgram.snrs.T[0] >= cutoff
-        periods.extend(pgram.periods[mask])
-        frequencies.extend(np.ones(len(pgram.periods[mask])) * freqs[i])
-        if on:
-            snrs.extend(pgram.snrs.T[0][mask])
+        else:
+            time_series = TimeSeries.from_numpy_array(data[:, i], tsamp = obs.header['tsamp'])
+            ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=100, bins_min=2, bins_max=260)
+            if on:
+                best_periods.append(pgram.periods[np.argmax(pgram.snrs.max(axis=1))])
+            mask = pgram.snrs.T[0] >= cutoff
+            periods.extend(pgram.periods[mask])
+            frequencies.extend(np.ones(len(pgram.periods[mask])) * freqs[i])
+            if on:
+                snrs.extend(pgram.snrs.T[0][mask])
 
     if not on:
         return periods, frequencies
@@ -63,18 +66,25 @@ def find_harmonics(periods, best_periods, num_periods):
     return ranked, harmonics
 
 
-def compare_on_off(periods, frequencies, back_periods, back_frequencies):
+def compare_on_off(on_data, off_data, freqs, cutoff):
     """Compares ON and OFF files."""
-    indicator = np.zeros(len(periods))
 
-    counter = 0
-    for (po, fo) in zip(periods, frequencies):
-        for (pb, fb) in zip(back_periods, back_frequencies):
-            if indicator[counter] == 0 and abs(po - pb) <= 1e-3 and abs(fo - fb) <= 1e-3:
-                indicator[counter] = 1
-        counter += 1
+    average_on = on_data[0][0]
+    for i in range(len(on_data)):
+        average_on += on_data[i][0]
+    average_on = average_on / len(on_data)
 
-    return indicator
+    average_off = off_data[0][0]
+    for i in range(len(off_data)):
+        average_off += off_data[i][0]
+    average_off = average_off / len(off_data)
+
+    ignore = []
+    for i in range(len(average_on)):
+        if average_on[i] >= cutoff and average_off[i] >= cutoff:
+            ignore.append(freqs[i])
+
+    return ignore
 
 
 def concat_helper(results):
@@ -93,32 +103,27 @@ def concat_helper(results):
     return [np.array(periods), np.array(frequencies), np.array(snrs), np.array(best_periods)]
 
 
-def plot_helper(periods, frequencies, snrs, harmonics, indicator):
+def plot_helper(periods, frequencies, snrs, harmonics):
     """Plots frequency channel vs. periodogram."""
 
     full_signal = list(zip(periods, frequencies, snrs))
-    on = []
+    signal = []
     alias = []
-    off = []
     for i in range(len(harmonics)):
         if harmonics[i]:
             alias.append(full_signal[i])
         else:
-            if indicator[i]:
-                off.append(full_signal[i])
-            else:
-                on.append(full_signal[i])
+            signal.append(full_signal[i])
 
     cmap = plt.cm.viridis
     norm = matplotlib.colors.Normalize(vmin = min(snrs), vmax = max(snrs))
 
     plt.figure(figsize = (8, 6))
-    if len(on) > 0:
-        plt.scatter(list(zip(*on))[0], list(zip(*on))[1], c = cmap(norm(list(zip(*on))[2])), marker = 'o')
+    if len(signal) > 0:
+        plt.scatter(list(zip(*signal))[0], list(zip(*signal))[1], c = cmap(norm(list(zip(*signal))[2])), marker = 'o')
     if len(alias) > 0:
         plt.scatter(list(zip(*alias))[0], list(zip(*alias))[1], c = cmap(norm(list(zip(*alias))[2])), marker = '+')
-    if len(off) > 0:
-        plt.scatter(list(zip(*off))[0], list(zip(*off))[1], c = cmap(norm(list(zip(*off))[2])), marker = '^')
+
     cbar = plt.colorbar(plt.cm.ScalarMappable(cmap = cmap, norm = norm))
     plt.xlabel('Periods')
     plt.ylabel('Frequencies')
@@ -135,32 +140,27 @@ freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs
 print("Progress: Read ON file.")
 
 pool = mp.Pool(mp.cpu_count())
-on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, True) for i in range(1, 9)]
-on_results = pool.starmap(periodic_analysis, on_iterables)
-on_results = concat_helper(on_results)
-print("Progress: Processed ON file.")
-
-ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
 
 if off_file is not None:
 
     background = Waterfall(off_file)
     background_data = np.squeeze(background.data)
-    background_freqs = np.array([background.header['fch1'] + i * background.header['foff'] for i in range(background.header['nchans'])])
     print("Progress: Read OFF file.")
 
-    off_iterables = [(background_data, background_freqs, 0.1 * i, 0.1 * (i + 1), cutoff, False) for i in range(1, 9)]
-    off_results = pool.map(periodic_analysis, off_iterables)
-    off_results = concat_helper(off_results)
+    ignore_chans = compare_on_off(data, background_data, freqs, cutoff)
+    on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, ignore_chans, True) for i in range(1, 9)]
     print("Progress: Processed OFF file.")
 
-    indicator = compare_on_off(on_results[0], on_results[1], off_results[0], off_results[1])
-
 else:
+    
+    on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, [], True) for i in range(1, 9)]
 
-    indicator = np.zeros(len(on_results[0]))
+on_results = pool.starmap(periodic_analysis, on_iterables)
+on_results = concat_helper(on_results)
+ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
+print("Progress: Processed ON file.")
 
-plot_helper(on_results[0], on_results[1], on_results[2], harmonics, indicator)
+plot_helper(on_results[0], on_results[1], on_results[2], harmonics)
 pool.close()
 pool.join()
 
