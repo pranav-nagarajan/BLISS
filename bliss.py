@@ -14,7 +14,7 @@ start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
 parser.add_argument('--background', type = str, default = None, help = "Location of 'OFF' data file.")
-parser.add_argument('--cutoff', type = int, default = 40, help = 'SNR cutoff value.')
+parser.add_argument('--cutoff', type = int, default = 10, help = 'SNR cutoff value.')
 parser.add_argument('--alias', type = int, default = 1, help = 'Number of periods to check for harmonics.')
 args = parser.parse_args()
 on_file = args.signal
@@ -33,7 +33,7 @@ def periodic_analysis(data, freqs, start, stop, cutoff, ignore_chans, on = True)
     for i in range(int(start * obs.header['nchans']), int(stop * obs.header['nchans'])):
 
         if freqs[i] in ignore_chans:
-            pass
+            continue
 
         else:
             time_series = TimeSeries.from_numpy_array(data[:, i], tsamp = obs.header['tsamp'])
@@ -147,7 +147,7 @@ if off_file is not None:
     background_data = np.squeeze(background.data)
     print("Progress: Read OFF file.")
 
-    ignore_chans = compare_on_off(data, background_data, freqs, cutoff)
+    ignore_chans = compare_on_off(data, background_data, freqs, 1.5 * cutoff)
     print(ignore_chans)
     on_iterables = [(data, freqs, 0.1 * i, 0.1 * (i + 1), cutoff, ignore_chans, True) for i in range(1, 9)]
     print("Progress: Processed OFF file.")
