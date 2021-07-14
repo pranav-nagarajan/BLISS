@@ -36,13 +36,14 @@ def calc_window(freqs, spectrum):
     """Finds means and standard deviations of 2.9 MHz windows of time-averaged spectrum."""
     current, start_freq, end_freq = min(freqs), min(freqs), max(freqs)
     store, means, sds = [], [], []
-    counter, running = 0, 0
+    index, counter, running = 0, 0, 0
 
     while current <= end_freq:
 
+        running += spectrum[index]
+        store.append(spectrum[index])
         counter += 1
-        running += spectrum[i]
-        store.append(spectrum[i])
+        index += 1
 
         if current - start_freq > 2.9:
             means.append(running / counter)
