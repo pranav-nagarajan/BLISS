@@ -16,20 +16,18 @@ off_file = args.background
 cutoff = args.cutoff
 
 
-def prep_data(file, return_freqs = False):
+def prep_data(file):
     """Generates time-averaged spectrum."""
     obs = Waterfall(file)
     data = np.squeeze(obs.data)
+    freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
 
-    average = data[0]
+    average = data[0].copy()
     for i in range(len(data)):
-        average += data[i]
+        average += data[i].copy()
     average = average / len(data)
 
-    if return_freqs:
-        freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
-        return average, freqs
-    return average
+    return freqs, average
 
 
 def calc_window(freqs, spectrum):
@@ -37,6 +35,7 @@ def calc_window(freqs, spectrum):
     current, start_freq, end_freq = min(freqs), min(freqs), max(freqs)
     store, means, sds = [], [], []
     index, counter, running = 0, 0, 0
+    diff, flag = 0, False
 
     while current <= end_freq:
 
@@ -50,36 +49,46 @@ def calc_window(freqs, spectrum):
             sds.append(np.std(store))
             counter, running = 0, 0
             on_store, off_store = [], []
+            if not flag:
+                diff = current - start_freq
+                flag = True
             start_freq = current
 
         current += freqs[0] - freqs[1]
 
-    return means, sds
+    means.append(running / counter)
+    sds.append(np.std(store))
+    return means, sds, diff
 
 
-def find_outlier(freqs, spectrum, means, sds, cutoff):
+def find_outlier(freqs, spectrum, means, sds, diff, cutoff):
     """Identifies signals by comparing to noise background in 2.9 MHz window."""
     outliers = []
     for i in range(len(freqs)):
-        bin = int((freqs[i] - min(freqs)) / 2.9)
-        z_score = (spectrum[i] - means[bin]) / sds[bin]
+        binned = int((freqs[i] - min(freqs)) / diff)
+        z_score = (spectrum[i] - means[binned]) / sds[binned]
         outliers.append(z_score > cutoff)
     return outliers
 
 
-on_average, freqs = prep_data(on_file, True)
-off_average = prep_data(off_file)
+on_freqs, on_average = prep_data(on_file)
+print("Progress: Read ON file.")
+off_freqs, off_average = prep_data(off_file)
+print("Progress: Read OFF file.")
 
-on_means, on_sds = calc_window(freqs, on_average)
-off_means, off_sds = calc_window(freqs, off_average)
+on_means, on_sds, on_diff = calc_window(on_freqs, on_average)
+on_outliers = find_outlier(on_freqs, on_average, on_means, on_sds, on_diff, cutoff)
+print("Progress: Processed ON file.")
 
-on_outliers = find_outlier(freqs, on_average, on_means, on_sds, cutoff)
-off_outliers = find_outlier(freqs, off_average, off_means, off_sds, cutoff)
+off_means, off_sds, off_diff = calc_window(off_freqs, off_average)
+off_outliers = find_outlier(on_freqs, off_average, off_means, off_sds, off_diff, cutoff)
+print("Progress: Processed OFF file.")
 
 ignore = []
 for i in range(len(on_outliers)):
     if on_outliers[i] and off_outliers[i]:
         ignore.append(freqs[i])
+print("Progress: ON-OFF comparison complete.")
 
 fig, ax = plt.subplots(2, 1, sharex = True)
 ax[0].plot(freqs, on_average)
