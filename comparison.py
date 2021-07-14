@@ -18,7 +18,7 @@ cutoff = args.cutoff
 
 def prep_data(file, return_freqs = False):
     """Generates time-averaged spectrum."""
-    obs = Waterfall(on_file)
+    obs = Waterfall(file)
     data = np.squeeze(obs.data)
 
     average = data[0]
@@ -52,7 +52,7 @@ def calc_window(freqs, spectrum):
             on_store, off_store = [], []
             start_freq = current
 
-        current += freqs[1] - freqs[0]
+        current += freqs[0] - freqs[1]
 
     return means, sds
 
