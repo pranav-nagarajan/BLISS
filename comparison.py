@@ -23,7 +23,7 @@ def prep_data(file):
     freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
 
     average = data[0].copy()
-    for i in range(len(data)):
+    for i in range(1, len(data)):
         average += data[i].copy()
     average = average / len(data)
 
