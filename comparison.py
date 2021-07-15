@@ -91,8 +91,8 @@ for i in range(len(on_outliers)):
 print("Progress: ON-OFF comparison complete.")
 
 fig, ax = plt.subplots(2, 1, sharex = True)
-ax[0].plot(freqs, on_average)
-ax[1].plot(freqs, off_average)
+ax[0].plot(on_freqs, on_average)
+ax[1].plot(off_freqs, off_average)
 ax[0].vlines(ignore, min(ax[0].get_ylim()), max(ax[0].get_ylim()), color = 'red')
 ax[1].vlines(ignore, min(ax[1].get_ylim()), max(ax[1].get_ylim()), color = 'red')
 plt.show()
