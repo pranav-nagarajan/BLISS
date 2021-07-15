@@ -87,7 +87,7 @@ print("Progress: Processed OFF file.")
 ignore = []
 for i in range(len(on_outliers)):
     if on_outliers[i] and off_outliers[i]:
-        ignore.append(freqs[i])
+        ignore.append(on_freqs[i])
 print("Progress: ON-OFF comparison complete.")
 
 fig, ax = plt.subplots(2, 1, sharex = True)
