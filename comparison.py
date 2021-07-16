@@ -22,10 +22,17 @@ def prep_data(file):
     """Generates time-averaged spectrum."""
     obs = Waterfall(file)
     data = np.squeeze(obs.data)
+
     freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
     avg = data.mean(axis = 0)
-    kurt =  kurtosis(data, axis = 0, nan_policy = 'omit')
-    return freqs, avg, kurt
+
+    kurts = []
+    for i in range(len(data[0])):
+        kurt = kurtosis(data[:, i], nan_policy = 'omit')
+        kurts.append(kurt)
+
+    kurto = np.array(kurts)
+    return freqs, avg, kurto
 
 
 def calc_window(freqs, spectrum):
