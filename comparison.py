@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.stats import kurtosis
+
 import argparse
 import time
 from blimpy import Waterfall
@@ -9,7 +11,7 @@ start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
 parser.add_argument('background', type = str, help = "Location of 'OFF' data file.")
-parser.add_argument('--cutoff', type = int, default = 10, help = "SNR cutoff value.")
+parser.add_argument('--cutoff', type = int, default = 20, help = "SNR cutoff value.")
 args = parser.parse_args()
 on_file = args.signal
 off_file = args.background
@@ -19,9 +21,11 @@ cutoff = args.cutoff
 def prep_data(file):
     """Generates time-averaged spectrum."""
     obs = Waterfall(file)
+    data = np.squeeze(obs.data)
     freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
-    average = np.squeeze(obs.data).mean(axis = 0)
-    return freqs, average
+    avg = data.mean(axis = 0)
+    kurt =  kurtosis(data, axis = 0, nan_policy = 'omit')
+    return freqs, avg, kurt
 
 
 def calc_window(freqs, spectrum):
@@ -65,17 +69,19 @@ def find_outlier(freqs, spectrum, means, sds, diff, cutoff):
     return outliers
 
 
-on_freqs, on_average = prep_data(on_file)
+on_freqs, on_average, on_kurtosis = prep_data(on_file)
 print("Progress: Read ON file.")
-off_freqs, off_average = prep_data(off_file)
+off_freqs, off_average, off_kurtosis = prep_data(off_file)
 print("Progress: Read OFF file.")
 
-on_means, on_sds, on_diff = calc_window(on_freqs, on_average)
-on_outliers = find_outlier(on_freqs, on_average, on_means, on_sds, on_diff, cutoff)
+# on_means, on_sds, on_diff = calc_window(on_freqs, on_average)
+# on_outliers = find_outlier(on_freqs, on_average, on_means, on_sds, on_diff, cutoff)
+on_outliers = (on_kurtosis >= cutoff)
 print("Progress: Processed ON file.")
 
-off_means, off_sds, off_diff = calc_window(off_freqs, off_average)
-off_outliers = find_outlier(on_freqs, off_average, off_means, off_sds, off_diff, cutoff)
+# off_means, off_sds, off_diff = calc_window(off_freqs, off_average)
+# off_outliers = find_outlier(on_freqs, off_average, off_means, off_sds, off_diff, cutoff)
+off_outliers = (off_kurtosis >= cutoff)
 print("Progress: Processed OFF file.")
 
 ignore = []
