@@ -72,20 +72,32 @@ def find_outlier(freqs, spectrum, means, sds, diff, cutoff):
         outliers.append(z_score > cutoff)
     return outliers
 
+def concat_helper(results):
+    """Concatenates results from worker processes."""
+    averages = []
+    kurtoses = []
+    for package in results:
+        averages.extend(package[0])
+        kurtoses.extend(package[1])
+    return np.array(averages), np.array(kurtoses)
+
+
 pool = mp.Pool(mp.cpu_count())
 
 signal = Waterfall(on_file)
 on_data = np.squeeze(signal.data)
 on_freqs = np.array([signal.header['fch1'] + i * signal.header['foff'] for i in range(signal.header['nchans'])])
 on_iterables = [(on_data, 0.1 * k, 0.1 * (k + 1)) for k in range(10)]
-on_average, on_kurtosis = pool.starmap(prep_data, on_iterables)
+on_results = pool.starmap(prep_data, on_iterables)
+on_average, on_kurtosis = concat_helper(on_results)
 print("Progress: Read ON file.")
 
 background = Waterfall(off_file)
 off_data = np.squeeze(background.data)
 off_freqs = np.array([background.header['fch1'] + j * background.header['foff'] for j in range(background.header['nchans'])])
 off_iterables = [(off_data, 0.1 * n, 0.1 * (n + 1)) for n in range(10)]
-off_average, off_kurtosis = pool.starmap(prep_data, off_iterables)
+off_results = pool.starmap(prep_data, off_iterables)
+off_average, off_kurtosis = concat_helper(off_results)
 print("Progress: Read OFF file.")
 
 # on_means, on_sds, on_diff = calc_window(on_freqs, on_average)
