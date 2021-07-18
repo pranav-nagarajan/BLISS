@@ -24,7 +24,7 @@ def prep_data(data, start, stop):
     avg = data.mean(axis = 0)
 
     kurts = []
-    for i in range(start, stop):
+    for i in range(int(start * len(data[0])), int(stop * len(data[0]))):
         kurt = kurtosis(data[:, i], nan_policy = 'omit')
         kurts.append(kurt)
 
