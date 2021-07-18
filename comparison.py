@@ -5,6 +5,7 @@ from scipy.stats import kurtosis
 
 import argparse
 import time
+import multiprocessing as mp
 from blimpy import Waterfall
 
 start = time.time()
@@ -18,21 +19,17 @@ off_file = args.background
 cutoff = args.cutoff
 
 
-def prep_data(file):
+def prep_data(data, start, stop):
     """Generates time-averaged spectrum."""
-    obs = Waterfall(file)
-    data = np.squeeze(obs.data)
-
-    freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
     avg = data.mean(axis = 0)
 
     kurts = []
-    for i in range(len(data[0])):
+    for i in range(start, stop):
         kurt = kurtosis(data[:, i], nan_policy = 'omit')
         kurts.append(kurt)
 
     kurto = np.array(kurts)
-    return freqs, avg, kurto
+    return avg, kurto
 
 
 def calc_window(freqs, spectrum):
@@ -75,10 +72,20 @@ def find_outlier(freqs, spectrum, means, sds, diff, cutoff):
         outliers.append(z_score > cutoff)
     return outliers
 
+pool = mp.Pool(mp.cpu_count())
 
-on_freqs, on_average, on_kurtosis = prep_data(on_file)
+signal = Waterfall(on_file)
+on_data = np.squeeze(signal.data)
+on_freqs = np.array([signal.header['fch1'] + i * signal.header['foff'] for i in range(signal.header['nchans'])])
+on_iterables = [(on_data, 0.1 * k, 0.1 * (k + 1)) for k in range(10)]
+on_average, on_kurtosis = pool.starmap(prep_data, on_iterables)
 print("Progress: Read ON file.")
-off_freqs, off_average, off_kurtosis = prep_data(off_file)
+
+background = Waterfall(off_file)
+off_data = np.squeeze(background.data)
+off_freqs = np.array([background.header['fch1'] + j * background.header['foff'] for j in range(background.header['nchans'])])
+off_iterables = [(off_data, 0.1 * n, 0.1 * (n + 1)) for n in range(10)]
+off_average, off_kurtosis = pool.starmap(prep_data, off_iterables)
 print("Progress: Read OFF file.")
 
 # on_means, on_sds, on_diff = calc_window(on_freqs, on_average)
@@ -108,6 +115,9 @@ ax[0].set_ylabel('Power')
 ax[1].set_ylabel('Power')
 plt.savefig('comparison.png')
 plt.show()
+
+pool.close()
+pool.join()
 
 np.savetxt('ignore.txt', np.array(ignore))
 end = time.time()
