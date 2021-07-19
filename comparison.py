@@ -91,6 +91,12 @@ on_freqs = np.array([signal.header['fch1'] + i * signal.header['foff'] for i in 
 on_iterables = [(on_data, 0.1 * k, 0.1 * (k + 1)) for k in range(10)]
 on_results = pool.starmap(prep_data, on_iterables)
 on_average, on_kurtosis = concat_helper(on_results)
+
+plt.figure()
+plt.hist(on_kurtosis)
+plt.xlabel('Kurtosis')
+plt.ylabel('Count')
+plt.savefig('kurtosis.png')
 print("Progress: Read ON file.")
 
 background = Waterfall(off_file)
