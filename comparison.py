@@ -21,10 +21,11 @@ cutoff = args.cutoff
 
 def prep_data(data, start, stop):
     """Generates time-averaged spectrum."""
-    avg = data.mean(axis = 0)
+    beg, end = int(start * len(data[0])), int(stop * len(data[0]))
+    avg = data.mean(axis = 0)[beg:end]
 
     kurts = []
-    for i in range(int(start * len(data[0])), int(stop * len(data[0]))):
+    for i in range(beg, end):
         kurt = kurtosis(data[:, i], nan_policy = 'omit')
         kurts.append(kurt)
 
