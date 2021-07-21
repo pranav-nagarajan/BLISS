@@ -59,7 +59,7 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
     best_periods = []
 
     time_series = TimeSeries.from_numpy_array(data, tsamp = tsamp)
-    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.01, period_max=10, bins_min=2, bins_max=260)
+    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
     mask = pgram.snrs.T[0] >= cutoff
     periods = pgram.periods[mask]
 
@@ -160,7 +160,7 @@ freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs
 nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 print("Progress: Read ON file.")
 
-#pool = mp.Pool(mp.cpu_count())
+pool = mp.Pool(mp.cpu_count())
 
 if off_file is not None:
 
@@ -173,9 +173,8 @@ else:
 
     on_iterables = [(data, None, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), cutoff) for i in range(1, 9)]
 
-#on_results = pool.starmap(periodic_analysis, on_iterables)
-#on_results = concat_helper(on_results)
-on_results = periodic_analysis(data, None, freqs, nchans, tsamp, 0.1, 0.9, cutoff)
+on_results = pool.starmap(periodic_analysis, on_iterables)
+on_results = concat_helper(on_results)
 ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
 print("Progress: File processing complete.")
 
@@ -184,8 +183,8 @@ if off_file is not None:
 else:
     plot_helper(on_results[0], on_results[1], on_results[2], harmonics, np.zeros(len(harmonics)))
 
-#pool.close()
-#pool.join()
+pool.close()
+pool.join()
 
 end = time.time()
 print('Best Period: ', ranked.keys()[0])
