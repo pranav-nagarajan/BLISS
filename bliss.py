@@ -107,14 +107,16 @@ def concat_helper(results):
     frequencies = []
     snrs = []
     best_periods = []
+    indicators = []
 
     for package in results:
         periods.extend(package[0])
         frequencies.extend(package[1])
         snrs.extend(package[2])
         best_periods.extend(package[3])
+        indicators.extend(package[4])
 
-    return [np.array(periods), np.array(frequencies), np.array(snrs), np.array(best_periods)]
+    return [np.array(periods), np.array(frequencies), np.array(snrs), np.array(best_periods), np.array(indicators)]
 
 
 def plot_helper(periods, frequencies, snrs, harmonics, indicators):
