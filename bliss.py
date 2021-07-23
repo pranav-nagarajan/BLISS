@@ -163,7 +163,7 @@ freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs
 nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 print("Progress: Read ON file.")
 
-#pool = mp.Pool(mp.cpu_count())
+pool = mp.Pool(mp.cpu_count())
 
 if off_files is not None:
 
@@ -180,9 +180,8 @@ else:
 
     on_iterables = [(data, None, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), cutoff) for i in range(1, 9)]
 
-#on_results = pool.starmap(periodic_analysis, on_iterables)
-#on_results = concat_helper(on_results)
-on_results = periodic_analysis(data, background_data, freqs, nchans, tsamp, 0.1, 0.9, cutoff)
+on_results = pool.starmap(periodic_analysis, on_iterables)
+on_results = concat_helper(on_results)
 ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
 print("Progress: File processing complete.")
 
@@ -192,8 +191,8 @@ else:
     signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, np.zeros(len(harmonics)))
 np.savetxt('signal.txt', signal)
 
-#pool.close()
-#pool.join()
+pool.close()
+pool.join()
 
 end = time.time()
 print('Best Period: ', ranked.keys()[0])
