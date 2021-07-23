@@ -36,6 +36,7 @@ print("Progress: Read OFF files.")
 freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
 nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 
+flag = False
 for package in input:
 
     fig, axes = plt.subplots(len(background_data) + 1, 2, figsize = (10, 10))
@@ -69,4 +70,9 @@ for package in input:
         axes[counter][1].set_title(plot_label + ' Spectrum')
         counter += 1
 
+    if not flag:
+        plt.savefig('plot.png')
+        flag = True
+        break
+    
     plt.show()

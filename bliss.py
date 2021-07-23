@@ -185,7 +185,7 @@ on_results = concat_helper(on_results)
 ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
 print("Progress: File processing complete.")
 
-if off_file is not None:
+if off_files is not None:
     signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, on_results[4])
 else:
     signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, np.zeros(len(harmonics)))
