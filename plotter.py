@@ -17,7 +17,7 @@ off_files = args.background
 input = []
 for name in inputs:
     input.extend(np.loadtxt(name))
-input = list(set(input))
+input = list(set([tuple(arr) for arr in input]))
 
 signal_data = []
 for on_file in on_files:
@@ -74,5 +74,5 @@ for package in input:
         plt.savefig('plot.png')
         flag = True
         break
-    
+
     plt.show()
