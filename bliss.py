@@ -13,12 +13,12 @@ from riptide import TimeSeries, ffa_search
 start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
-parser.add_argument('--background', type = str, default = None, help = "Location of 'OFF' data file.")
-parser.add_argument('--cutoff', type = int, default = 20, help = 'SNR cutoff value.')
+parser.add_argument('--background', action = "append", type = str, default = None, help = "Location of 'OFF' data file.")
+parser.add_argument('--cutoff', type = int, default = 40, help = 'SNR cutoff value.')
 parser.add_argument('--alias', type = int, default = 1, help = 'Number of periods to check for harmonics.')
 args = parser.parse_args()
 on_file = args.signal
-off_file = args.background
+off_files = args.background
 cutoff = args.cutoff
 num_periods = args.alias
 
@@ -35,8 +35,10 @@ def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cuto
 
         on_periods, on_freqs, sn_ratios, best_period = periodic_helper(on_data[:, i], freqs[i], tsamp, cutoff)
         if off_data is not None:
-            off_periods = periodic_helper(off_data[:, i], freqs[i], tsamp, cutoff, False)
-            indicator = compare_on_off(on_periods, off_periods)
+            indicator = np.zeros(len(on_periods))
+            for datum in off_data:
+                off_periods = periodic_helper(datum[:, i], freqs[i], tsamp, cutoff, False)
+                indicator = compare_on_off(on_periods, off_periods, indicator)
 
         periods.extend(on_periods)
         frequencies.extend(on_freqs)
@@ -59,7 +61,7 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
     best_periods = []
 
     time_series = TimeSeries.from_numpy_array(data, tsamp = tsamp)
-    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
+    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.1, period_max=10, bins_min=2, bins_max=260)
     mask = pgram.snrs.T[0] >= cutoff
     periods = pgram.periods[mask]
 
@@ -72,10 +74,9 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
         return periods, frequencies, snrs, best_period
 
 
-def compare_on_off(on_periods, off_periods):
+def compare_on_off(on_periods, off_periods, indicator):
     """"Compares ON and OFF files."""
     counter, tol = 0, 1e-4
-    indicator = np.zeros(len(on_periods))
     for i in range(len(on_periods)):
         po = on_periods[i]
         for j in range(len(off_periods)):
@@ -153,7 +154,7 @@ def plot_helper(periods, frequencies, snrs, harmonics, indicators):
     plt.savefig('output.png')
     plt.show();
 
-    return full_signal
+    return signal
 
 
 obs = Waterfall(on_file)
@@ -162,31 +163,37 @@ freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs
 nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 print("Progress: Read ON file.")
 
-pool = mp.Pool(mp.cpu_count())
+#pool = mp.Pool(mp.cpu_count())
 
-if off_file is not None:
+if off_files is not None:
 
-    background = Waterfall(off_file)
-    background_data = np.squeeze(background.data)
+    background_data = []
+    for off_file in off_files:
+        background = Waterfall(off_file)
+        back_data = np.squeeze(background.data)
+        background_data.append(back_data)
+
     on_iterables = [(data, background_data, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), cutoff) for i in range(1, 9)]
-    print("Progress: Read OFF file.")
+    print("Progress: Read OFF files.")
 
 else:
 
     on_iterables = [(data, None, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), cutoff) for i in range(1, 9)]
 
-on_results = pool.starmap(periodic_analysis, on_iterables)
-on_results = concat_helper(on_results)
+#on_results = pool.starmap(periodic_analysis, on_iterables)
+#on_results = concat_helper(on_results)
+on_results = periodic_analysis(data, background_data, freqs, nchans, tsamp, 0.1, 0.9, cutoff)
 ranked, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
 print("Progress: File processing complete.")
 
 if off_file is not None:
-    plot_helper(on_results[0], on_results[1], on_results[2], harmonics, on_results[4])
+    signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, on_results[4])
 else:
-    plot_helper(on_results[0], on_results[1], on_results[2], harmonics, np.zeros(len(harmonics)))
+    signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, np.zeros(len(harmonics)))
+np.savetxt('signal.txt', signal)
 
-pool.close()
-pool.join()
+#pool.close()
+#pool.join()
 
 end = time.time()
 print('Best Period: ', ranked.keys()[0])
