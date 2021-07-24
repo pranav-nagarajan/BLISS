@@ -39,7 +39,7 @@ nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 flag = False
 for package in input:
 
-    fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (10, 10))
+    fig, axes = plt.subplots(len(signal_data) + len(background_data), 2)
     channel =  np.where(freqs == package[1])[0][0]
 
     sig_index, back_index, counter = 0, 0, 0
@@ -68,6 +68,8 @@ for package in input:
         axes[counter][0].set_xlim(package[0] - 0.1, package[0] + 0.1)
         axes[counter][0].set_title(plot_label + ' Periodogram')
         axes[counter][1].set_title(plot_label + ' Spectrum')
+
+        plt.tight_layout()
         counter += 1
 
     if not flag:
