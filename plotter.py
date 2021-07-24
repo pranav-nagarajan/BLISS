@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
+import time
 
 from blimpy import Waterfall
 from riptide import TimeSeries, ffa_search
 
+start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('--inputs', action = "append", type = str, help = "Location of text files.")
 parser.add_argument('--signal', action = "append", type = str, help = "Location of 'ON' data.")
@@ -39,7 +41,7 @@ nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 flag = False
 for package in input:
 
-    fig, axes = plt.subplots(len(signal_data) + len(background_data), 2)
+    fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (20, 20))
     channel =  np.where(freqs == package[1])[0][0]
 
     sig_index, back_index, counter = 0, 0, 0
@@ -65,7 +67,7 @@ for package in input:
         axes[counter][1].set_xlabel('Frequency')
         axes[counter][1].set_ylabel('Power')
 
-        axes[counter][0].set_xlim(package[0] - 0.1, package[0] + 0.1)
+        axes[counter][0].set_xlim(package[0] - 1.0, package[0] + 1.0)
         axes[counter][0].set_title(plot_label + ' Periodogram')
         axes[counter][1].set_title(plot_label + ' Spectrum')
 
@@ -75,6 +77,8 @@ for package in input:
     if not flag:
         plt.savefig('plot.png')
         flag = True
+        end = time.time()
+        print('Time Taken: ', end - start)
         break
 
     plt.show()
