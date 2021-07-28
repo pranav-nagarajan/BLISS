@@ -22,15 +22,15 @@ def simulate_period(on_data, off_data, freqs, nchans, tsamp, start, stop, trial,
     indicators = []
 
     for i in range(int(start * nchans), int(stop * nchans)):
-        rts = TimeSeries.from_numpy_array(on_data, tsamp = tsamp).normalise()
+        rts = TimeSeries.from_numpy_array(on_data[:, i], tsamp = tsamp).normalise()
         if freqs[i] in channels:
-            fts = TimeSeries.generate(length=300.0, tsamp=tsamp, period=trial, ducy=0.02, amplitude=20.0).normalise()
+            fts = TimeSeries.generate(length=len(rts.data), tsamp=tsamp, period=trial, ducy=0.02, amplitude=20.0).normalise()
             rts = TimeSeries.from_numpy_array(rts.data + fts.data, tsamp = tsamp).normalise()
         ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
         best_period = pgram.periods[np.argmax(pgram.snrs.max(axis=1))]
         best_periods.append(best_period)
 
-        ots = TimeSeries.from_numpy_array(off_data, tsamp = tsamp).normalise()
+        ots = TimeSeries.from_numpy_array(off_data[:, i], tsamp = tsamp).normalise()
         ots, opgram = ffa_search(ots, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
         off_period = opgram.periods[np.argmax(opgram.snrs.max(axis=1))]
         indicators.append(abs(best_period - off_period) > 1e-4)
@@ -38,7 +38,7 @@ def simulate_period(on_data, off_data, freqs, nchans, tsamp, start, stop, trial,
     return np.array(best_periods), np.array(indicators)
 
 
-def simulate_helper(trial, multi = True):
+def simulate_helper(trial):
     """Carries out simulation for a single trial period."""
     on_iterables = [(data, back_data, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), trial, injection) for i in range(1, 9)]
     on_results = pool.starmap(simulate_period, on_iterables)
