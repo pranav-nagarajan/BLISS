@@ -64,7 +64,7 @@ for package in input:
         axes[counter][0].set_ylabel('SNR')
 
         axes[counter][1].plot(ts.fold(package[0], bins = 1))
-        axes[counter][1].set_xlabel('Frequency')
+        axes[counter][1].set_xlabel('Bin')
         axes[counter][1].set_ylabel('Power')
 
         axes[counter][0].set_xlim(package[0] - 1.0, package[0] + 1.0)
