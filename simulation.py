@@ -4,10 +4,12 @@ import pandas as pd
 
 import argparse
 import multiprocessing as mp
+import time
 
 from blimpy import Waterfall
 from riptide import TimeSeries, ffa_search
 
+start = time.time()
 parser = argparse.ArgumentParser()
 parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
 parser.add_argument('background', type = str, help = "Location of 'OFF' data file.")
@@ -62,7 +64,7 @@ print("Progress: Read ON file.")
 
 background = Waterfall(off_file)
 back_data = np.squeeze(background.data)
-injection = np.random.choice(freqs, len(data[:, 0]) * 0.55, replace = False)
+injection = np.random.choice(freqs, int(len(data[:, 0]) * 0.55), replace = False)
 print("Progress: Read OFF file.")
 
 pool = mp.Pool(mp.cpu_count())
@@ -82,3 +84,6 @@ plt.xlabel('Injected Period')
 plt.ylabel('Recovered Period')
 plt.savefig('simulation.png')
 plt.show()
+
+end = time.time()
+print('Time Taken: ', end - start)
