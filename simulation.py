@@ -26,7 +26,7 @@ def simulate_period(on_data, off_data, freqs, nchans, tsamp, start, stop, trial,
     for i in range(int(start * nchans), int(stop * nchans)):
         rts = TimeSeries.from_numpy_array(on_data[:, i], tsamp = tsamp).normalise()
         if freqs[i] in channels:
-            fts = TimeSeries.generate(length=len(rts.data) * tsamp, tsamp=tsamp, period=trial, ducy=0.02, amplitude=20.0).normalise()
+            fts = TimeSeries.generate(length=len(rts.data) * tsamp, tsamp=tsamp, period=trial, ducy=0.02, amplitude=100.0).normalise()
             rts = TimeSeries.from_numpy_array(rts.data + fts.data, tsamp = tsamp).normalise()
         ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
         best_period = pgram.periods[np.argmax(pgram.snrs.max(axis=1))]
@@ -64,13 +64,13 @@ print("Progress: Read ON file.")
 
 background = Waterfall(off_file)
 back_data = np.squeeze(background.data)
-injection = np.random.choice(freqs, int(len(data[:, 0]) * 0.55), replace = False)
+injection = np.random.choice(freqs, int(len(freqs) * 0.55), replace = False)
 print("Progress: Read OFF file.")
 
 pool = mp.Pool(mp.cpu_count())
 
 best_periods = []
-for trial in np.linspace(1, 10, 10):
+for trial in np.linspace(5, 10, 6):
     best_periods.append(simulate_helper(trial))
 best_periods = np.array(best_periods)
 print("Progress: File processing complete.")
@@ -79,7 +79,7 @@ pool.close()
 pool.join()
 
 plt.figure()
-plt.scatter(np.linspace(1, 10, 10), best_periods)
+plt.scatter(np.linspace(5, 10, 6), best_periods)
 plt.xlabel('Injected Period')
 plt.ylabel('Recovered Period')
 plt.savefig('simulation.png')
