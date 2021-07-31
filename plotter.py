@@ -40,7 +40,7 @@ nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 
 flag = False
 for package in input:
-    if package[0] != 5.0:
+    if abs(package[0] - 11.0) > 0.05:
         continue
 
     fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (20, 20))
@@ -60,13 +60,13 @@ for package in input:
 
         rts = TimeSeries.from_numpy_array(plot_data, tsamp = tsamp)
         ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
-        folded = ts.fold(package[0], bins = 250, subints = 1)
+        folded = ts.fold(package[0], bins = 100, subints = 1)
 
         axes[counter][0].plot(pgram.periods, pgram.snrs.max(axis = 1))
         axes[counter][0].set_xlabel('Period (sec)')
         axes[counter][0].set_ylabel('SNR')
 
-        axes[counter][1].plot(np.linspace(0, package[0], 250), folded)
+        axes[counter][1].plot(np.linspace(0, package[0], 100), folded)
         axes[counter][1].set_xlabel('Time (sec)')
         axes[counter][1].set_ylabel('Power')
 
