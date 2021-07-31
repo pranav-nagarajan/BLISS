@@ -60,13 +60,13 @@ for package in input:
 
         rts = TimeSeries.from_numpy_array(plot_data, tsamp = tsamp)
         ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=100, bins_min=2, bins_max=260)
-        folded = ts.fold(package[0], bins = 100, subints = 1)
+        folded = ts.fold(package[0], bins = 90, subints = 1)
 
         axes[counter][0].plot(pgram.periods, pgram.snrs.max(axis = 1))
         axes[counter][0].set_xlabel('Period (sec)')
         axes[counter][0].set_ylabel('SNR')
 
-        axes[counter][1].plot(np.linspace(0, package[0], 100), folded)
+        axes[counter][1].plot(np.linspace(0, package[0], 90), folded)
         axes[counter][1].set_xlabel('Time (sec)')
         axes[counter][1].set_ylabel('Power')
 
