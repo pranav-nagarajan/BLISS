@@ -16,11 +16,15 @@ parser.add_argument('signal', type = str, help = "Location of 'ON' data file.")
 parser.add_argument('--background', action = "append", type = str, default = None, help = "Location of 'OFF' data file.")
 parser.add_argument('--cutoff', type = int, default = 40, help = 'SNR cutoff value.')
 parser.add_argument('--alias', type = int, default = 1, help = 'Number of periods to check for harmonics.')
+parser.add_argument('--simulate', type = bool, default = False, help = 'Turns on simulation of fake signal.')
+parser.add_argument('--output', type = str, default = "signal.txt", help = 'Name of output file.')
 args = parser.parse_args()
 on_file = args.signal
 off_files = args.background
 cutoff = args.cutoff
 num_periods = args.alias
+simulate = args.simulate
+output = args.output
 
 
 def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cutoff):
@@ -61,7 +65,10 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
     best_periods = []
 
     time_series = TimeSeries.from_numpy_array(data, tsamp = tsamp)
-    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=0.1, period_max=10, bins_min=2, bins_max=260)
+    if simulate and frequency in injection:
+            fts = TimeSeries.generate(length=len(data)*tsamp, tsamp=tsamp, period=5.0, ducy=0.02, amplitude=100.0)
+            time_series = TimeSeries.from_numpy_array(time_series.data + fts.data, tsamp = tsamp)
+    ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=2.5, period_max=10, bins_min=2, bins_max=260)
     mask = pgram.snrs.T[0] >= cutoff
     periods = pgram.periods[mask]
 
@@ -159,8 +166,12 @@ def plot_helper(periods, frequencies, snrs, harmonics, indicators):
 
 obs = Waterfall(on_file)
 data = np.squeeze(obs.data)
+
 freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs.header['nchans'])])
 nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
+
+if simulate:
+    injection = np.random.choice(freqs, 10, replace = False)
 print("Progress: Read ON file.")
 
 pool = mp.Pool(mp.cpu_count())
@@ -189,7 +200,7 @@ if off_files is not None:
     signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, on_results[4])
 else:
     signal = plot_helper(on_results[0], on_results[1], on_results[2], harmonics, np.zeros(len(harmonics)))
-np.savetxt('signal.txt', signal)
+np.savetxt(output, signal)
 
 pool.close()
 pool.join()
