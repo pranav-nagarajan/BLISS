@@ -40,6 +40,8 @@ nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 
 flag = False
 for package in input:
+    if package[0] != 5.0:
+        continue
 
     fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (20, 20))
     channel =  np.where(freqs == package[1])[0][0]
