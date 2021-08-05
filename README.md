@@ -22,7 +22,17 @@ The initial stage of the project will be to write a python wrapper that uses the
 
 ## FFA Algorithm
 
-## Benchmarking
+Consider an evenly sampled time series containing <em>m</em> cycles of a pulsed periodic signal with integer period <em>p</em>. This data can be represented as a two-dimensional array with <em>m</em> rows and <em>p</em> columns. Each row represents a cycle; since all pulses are vertically aligned, phase-coherent folding can be achieved by summing across all of the rows.
+
+Now, increase the period to a non-integer value <em>p + Δp</em>, where <em>0 < Δp < 1</em>. Then, the periodic signal will appear to drift to the right across time, toward higher values of phase. To phase-coherently fold the signal, it is necessary to apply a circular rotation to each pulse to compensate for this drift; in other words, we have to integrate along a diagonal path, parametrized by a slope <em>s</em>. The folding transform of the data is defined as "the set of integrated pulse profiles obtained for all trial values of <em>s</em> with <em>0 ≤ s < m</em>," where <em>s = 0</em> corresponds to a folding period of <em>p</em>, and <em>s = m</em> corresponds to a folding period of roughly <em>p + 1</em> [2]. 
+
+Figure 1 below, taken from Morello et al. (2020), illustrates the folding transform on a dataset with <em>m</em> = 8 and <em>p</em> = 6. The dataset contains an artifical train of pulses with a width of 1 sample, an initial phase of <em>ϕ</em> = 1, and a periodicity such that the signal appears to drift by <em>s</em> = 4 bins across the total observation time. The visible peak in integrated intensity in the folding transform indicates the detection of a candidate periodic signal.
+  
+ ![Folding Transform](/pictures/folding_transform.jpeg)
+
+The depth-first implemention of the FFA partitions the rows of the dataset into two arbitrarily sized sections, called the head and the tail. Within each section, the integration path will drift by <em>i</em> and <em>j</em> bins respectively, with an additional possible phase jump <em>b</em> at the boundary, such that <em>s = i + b + j</em>. If <em>H</em>, <em>T</em>, and <em>F</em> represent the folding transforms of the head, tail, and full dataset, then row <em>s</em> of the full folding transform can be obtained by adding together row <em>i</em> of H and row <em>j</em> of T rotated left by <em>i + b</em> bins. Figure 2 below, taken from Morello et al. (2020), summarizes this divide-and-conquer strategy.
+  
+![Fast Folding Algorithm](/pictures/fast_folding_algorithm.jpeg)
 
 ## Results
 
