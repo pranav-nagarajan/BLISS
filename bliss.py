@@ -53,11 +53,12 @@ def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cuto
         on_periods, on_freqs, sn_ratios, best_period, widths, mini, maxi = periodic_helper(on_data[:, i], freqs[i], tsamp, cutoff)
         if off_data is not None:
             indicator = np.zeros(len(on_periods))
+            codes = np.zeros(len(on_periods), dtype = str)
             for j in range(len(off_data)):
                 datum = off_data[j]
                 off_periods = periodic_helper(datum[:, i], freqs[i], tsamp, cutoff, False)
                 if beam:
-                    indicator, codes = compare_on_off(on_periods, off_periods, indicator, j)
+                    indicator, codes = compare_on_off(on_periods, off_periods, indicator, codes)
                 else:
                     indicator = compare_on_off(on_periods, off_periods, indicator)
 
@@ -109,9 +110,8 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
         return periods, frequencies, snrs, best_period, best_widths, min_widths, max_widths
 
 
-def compare_on_off(on_periods, off_periods, indicator, pos = -1):
+def compare_on_off(on_periods, off_periods, indicator, codes = None):
     """"Compares ON and OFF files."""
-    codes = []
     counter, tol = 0, 1e-4
     for i in range(len(on_periods)):
         po = on_periods[i]
@@ -120,13 +120,13 @@ def compare_on_off(on_periods, off_periods, indicator, pos = -1):
             if abs(po - pf) <= tol:
                 if indicator[counter] == 0:
                     indicator[counter] = 1
-                if pos != -1:
-                    codes.append('1' + '100'[-pos:] + '100'[:-pos])
+                if codes is not None:
+                    codes[counter] += '1'
             else:
-                if pos != -1:
-                    codes.append('1000')
+                if codes is not None:
+                    codes[counter] += '0'
         counter += 1
-    if pos != -1:
+    if codes is not None:
         return indicator, codes
     return indicator
 

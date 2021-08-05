@@ -31,7 +31,7 @@ for package in input:
         else:
             flags += '0'
     semi = package[-1]
-    codes.append("".join(map(lambda x, y: x + y, flags, semi[1:])))
+    codes.append("".join(map(lambda x, y: x + y, flags, semi)))
 
 
 signal_data = []
