@@ -28,11 +28,11 @@ Now, increase the period to a non-integer value <em>p + Δp</em>, where <em>0 < 
 
 Figure 1 below, taken from Morello et al. (2020), illustrates the folding transform on a dataset with <em>m</em> = 8 and <em>p</em> = 6. The dataset contains an artifical train of pulses with a width of 1 sample, an initial phase of <em>ϕ</em> = 1, and a periodicity such that the signal appears to drift by <em>s</em> = 4 bins across the total observation time. The visible peak in integrated intensity in the folding transform indicates the detection of a candidate periodic signal.
   
- ![Folding Transform](/pictures/folding_transform.jpeg)
+ ![Folding Transform](/Pictures/folding_transform.jpeg)
 
 The depth-first implemention of the FFA partitions the rows of the dataset into two arbitrarily sized sections, called the head and the tail. Within each section, the integration path will drift by <em>i</em> and <em>j</em> bins respectively, with an additional possible phase jump <em>b</em> at the boundary, such that <em>s = i + b + j</em>. If <em>H</em>, <em>T</em>, and <em>F</em> represent the folding transforms of the head, tail, and full dataset, then row <em>s</em> of the full folding transform can be obtained by adding together row <em>i</em> of H and row <em>j</em> of T rotated left by <em>i + b</em> bins. Figure 2 below, taken from Morello et al. (2020), summarizes this divide-and-conquer strategy.
   
-![Fast Folding Algorithm](/pictures/fast_folding_algorithm.jpeg)
+![Fast Folding Algorithm](/Pictures/fast_folding_algorithm.jpeg)
 
 ## Results
 
