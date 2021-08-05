@@ -267,7 +267,7 @@ for i in tqdm(range(len(signal))):
     signal[i] += (on_results[4][filter][i], on_results[5][filter][i], on_results[6][filter][i])
     signal[i] += (obs.header['source_name'], obs.header['tstart'], on_file)
     if beam:
-        signal[i] += (on_results[-1][i])
+        signal[i] += (on_results[-1][i],)
 np.savetxt(output, signal, fmt = "%s")
 
 if multi:
