@@ -16,10 +16,23 @@ inputs = args.inputs
 on_files = args.signal
 off_files = args.background
 
-input = []
+full_input = []
 for name in inputs:
-    input.extend(np.loadtxt(name))
-input = list(set([tuple(arr) for arr in input]))
+    full_input.extend(np.loadtxt(name))
+input = list(set([tuple(arr) for arr in full_input]))
+
+codes = []
+for package in input:
+    flags = ''
+    for name in inputs:
+        curr = np.loadtxt(name)
+        if package in curr:
+            flags += '1'
+        else:
+            flags += '0'
+    semi = package[-1]
+    codes.append("".join(map(lambda x, y: x + y, flags, semi[1:])))
+
 
 signal_data = []
 for on_file in on_files:
@@ -40,8 +53,6 @@ nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 
 flag = False
 for package in input:
-    if abs(package[0] - 99.0) > 0.05:
-        continue
 
     fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (20, 20))
     channel =  np.where(freqs == package[1])[0][0]
@@ -60,13 +71,13 @@ for package in input:
 
         rts = TimeSeries.from_numpy_array(plot_data, tsamp = tsamp)
         ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=100, bins_min=2, bins_max=260)
-        folded = ts.fold(package[0], bins = 90, subints = 1)
+        folded = ts.fold(package[0], bins = 50, subints = 1)
 
         axes[counter][0].plot(pgram.periods, pgram.snrs.max(axis = 1))
         axes[counter][0].set_xlabel('Period (sec)')
         axes[counter][0].set_ylabel('SNR')
 
-        axes[counter][1].plot(np.linspace(0, package[0], 90), folded)
+        axes[counter][1].plot(np.linspace(0, package[0], 50), folded)
         axes[counter][1].set_xlabel('Time (sec)')
         axes[counter][1].set_ylabel('Power')
 
@@ -79,6 +90,7 @@ for package in input:
 
     if not flag:
         plt.savefig('plot.png')
+        np.savetxt('codes.txt', codes)
         flag = True
         end = time.time()
         print('Time Taken: ', end - start)
