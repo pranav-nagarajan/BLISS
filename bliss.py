@@ -57,9 +57,9 @@ def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cuto
                 datum = off_data[j]
                 off_periods = periodic_helper(datum[:, i], freqs[i], tsamp, cutoff, False)
                 if beam:
-                    indicator = compare_on_off(on_periods, off_periods, indicator)
-                else:
                     indicator, codes = compare_on_off(on_periods, off_periods, indicator, j)
+                else:
+                    indicator = compare_on_off(on_periods, off_periods, indicator)
 
         periods.extend(on_periods)
         frequencies.extend(on_freqs)
