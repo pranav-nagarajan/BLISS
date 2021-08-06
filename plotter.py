@@ -11,27 +11,34 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--inputs', action = "append", type = str, help = "Location of text files.")
 parser.add_argument('--signal', action = "append", type = str, help = "Location of 'ON' data.")
 parser.add_argument('--background', action = "append", type = str, help = "Location of 'OFF' data.")
+parser.add_argument('--range', type = float, nargs = 2, default = [2.5, 10], help = 'Period range for FFA search.')
+parser.add_argument('--bins', type = int, default = 10, help = "Number of bins for folded profile.")
+parser.add_argument('--beam', action = store_true,  help = "Creates a six-digit code summarizing ON-OFF comparison.")
 args = parser.parse_args()
 inputs = args.inputs
 on_files = args.signal
 off_files = args.background
+period_range = args.range
+num_bins = args.bins
+beam = args.beam
 
 full_input = []
 for name in inputs:
     full_input.extend(np.loadtxt(name, dtype = str))
 input = list(set([tuple(arr) for arr in full_input]))
 
-codes = []
-for package in input:
-    flags = ''
-    for name in inputs:
-        curr = np.loadtxt(name, dtype = str)
-        if package in curr:
-            flags += '1'
-        else:
-            flags += '0'
-    semi = package[-1]
-    codes.append("".join(map(lambda x, y: x + y, flags, semi)))
+if beam:
+    codes = []
+    for package in input:
+        flags = ''
+        for name in inputs:
+            curr = np.loadtxt(name, dtype = str)
+            if package in curr:
+                flags += '1'
+            else:
+                flags += '0'
+        semi = package[-1]
+        codes.append("".join(map(lambda x, y: x + y, flags, semi)))
 
 
 signal_data = []
@@ -70,14 +77,14 @@ for package in input:
             back_index += 1
 
         rts = TimeSeries.from_numpy_array(plot_data, tsamp = tsamp)
-        ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=100, bins_min=2, bins_max=260)
-        folded = ts.fold(float(package[0]), bins = 5, subints = 1)
+        ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=period_range[0], period_max=period_range[1], bins_min=2, bins_max=260)
+        folded = ts.fold(float(package[0]), bins = num_bins, subints = 1)
 
         axes[counter][0].plot(pgram.periods, pgram.snrs.max(axis = 1))
         axes[counter][0].set_xlabel('Period (sec)')
         axes[counter][0].set_ylabel('SNR')
 
-        axes[counter][1].plot(np.linspace(0, float(package[0]), 5), folded)
+        axes[counter][1].plot(np.linspace(0, float(package[0]), num_bins), folded)
         axes[counter][1].set_xlabel('Time (sec)')
         axes[counter][1].set_ylabel('Power')
 
@@ -90,7 +97,8 @@ for package in input:
 
     if not flag:
         plt.savefig('plot.png')
-        np.savetxt('codes.txt', codes)
+        if beam:
+            np.savetxt('codes.txt', codes)
         flag = True
         end = time.time()
         print('Time Taken: ', end - start)

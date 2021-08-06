@@ -20,7 +20,7 @@ parser.add_argument('--alias', type = int, default = 1, help = 'Number of period
 parser.add_argument('--range', type = float, nargs = 2, default = [2.5, 10], help = 'Period range for FFA search.')
 parser.add_argument('--multi', action = "store_true", help = 'Use multiprocessing.')
 parser.add_argument('--simulate', action = "store_true", help = 'Turns on simulation of fake signal.')
-parser.add_argument('--beam', action = "store_true", help = 'Creates a four-digit code summarizing ON-OFF comparison.')
+parser.add_argument('--beam', action = "store_true", help = 'Creates a three-digit code summarizing ON-OFF comparison.')
 parser.add_argument('--output', type = str, default = "signal.txt", help = 'Name of output file.')
 args = parser.parse_args()
 on_file = args.signal
