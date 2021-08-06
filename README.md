@@ -36,11 +36,17 @@ The depth-first implemention of the FFA partitions the rows of the dataset into 
 
 ## Results
 
+As a proof of concept, the analysis portion of the project was tested on a single 5-minute ON file collected for the pulsar B0355+54, which has a literature period of 0.156 seconds. Figure 3 below displays the period-frequency space output of `bliss.py`, which accurately recovered a dominant periodicity of 156.4 milliseconds:
+  
+![Pulsar B0355+54](/Pictures/pulsar_output.png)
+ 
+The + symbols denote harmonics of the dominant periodic signal, reinforcing the signal's validity. After implementing multiprocessing techniques, the pipeline was next tested on a full six-file cadence from the Breakthrough Listen data archives.
+
 ## Next Steps
 
 ## References
 
-1. Enriquez, J. Emilio, et al. "The Breakthrough Listen search for intelligent life: 1.1–1.9 GHz observations of 692 nearby stars." https://arxiv.org/pdf/1709.03491.pdf
-2. Morello, Vincent, et al. "Optimal periodicity searching: Revisiting the Fast Folding Algorithm for large-scale pulsar surveys." https://arxiv.org/pdf/2004.03701.pdf
+1. Enriquez, J. Emilio, et al. (2018) "The Breakthrough Listen search for intelligent life: 1.1–1.9 GHz observations of 692 nearby stars." https://arxiv.org/pdf/1709.03491.pdf
+2. Morello, Vincent, et al. (2020) "Optimal periodicity searching: Revisiting the Fast Folding Algorithm for large-scale pulsar surveys." https://arxiv.org/pdf/2004.03701.pdf
 3. https://blimpy.readthedocs.io/en/latest/
 4. https://pypi.org/project/riptide-ffa/
