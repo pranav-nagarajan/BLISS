@@ -25,7 +25,7 @@ codes = []
 for package in input:
     flags = ''
     for name in inputs:
-        curr = np.loadtxt(name)
+        curr = np.loadtxt(name, dtype = str)
         if package in curr:
             flags += '1'
         else:
