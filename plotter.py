@@ -18,7 +18,7 @@ off_files = args.background
 
 full_input = []
 for name in inputs:
-    full_input.extend(np.loadtxt(name))
+    full_input.extend(np.loadtxt(name, dtype = str))
 input = list(set([tuple(arr) for arr in full_input]))
 
 codes = []
@@ -55,7 +55,7 @@ flag = False
 for package in input:
 
     fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (20, 20))
-    channel =  np.where(freqs == package[1])[0][0]
+    channel =  np.where(freqs == float(package[1]))[0][0]
 
     sig_index, back_index, counter = 0, 0, 0
     for i in range(len(signal_data) + len(background_data)):
@@ -71,17 +71,17 @@ for package in input:
 
         rts = TimeSeries.from_numpy_array(plot_data, tsamp = tsamp)
         ts, pgram = ffa_search(rts, rmed_width=4.0, period_min=2.5, period_max=100, bins_min=2, bins_max=260)
-        folded = ts.fold(package[0], bins = 50, subints = 1)
+        folded = ts.fold(float(package[0]), bins = 5, subints = 1)
 
         axes[counter][0].plot(pgram.periods, pgram.snrs.max(axis = 1))
         axes[counter][0].set_xlabel('Period (sec)')
         axes[counter][0].set_ylabel('SNR')
 
-        axes[counter][1].plot(np.linspace(0, package[0], 50), folded)
+        axes[counter][1].plot(np.linspace(0, float(package[0]), 5), folded)
         axes[counter][1].set_xlabel('Time (sec)')
         axes[counter][1].set_ylabel('Power')
 
-        axes[counter][0].set_xlim(package[0] - 1.0, package[0] + 1.0)
+        axes[counter][0].set_xlim(float(package[0]) - 1.0, float(package[0]) + 1.0)
         axes[counter][0].set_title(plot_label + ' Periodogram')
         axes[counter][1].set_title(plot_label + ' Spectrum')
 
