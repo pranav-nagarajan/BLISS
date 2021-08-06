@@ -13,7 +13,7 @@ parser.add_argument('--signal', action = "append", type = str, help = "Location 
 parser.add_argument('--background', action = "append", type = str, help = "Location of 'OFF' data.")
 parser.add_argument('--range', type = float, nargs = 2, default = [2.5, 10], help = 'Period range for FFA search.')
 parser.add_argument('--bins', type = int, default = 10, help = "Number of bins for folded profile.")
-parser.add_argument('--beam', action = store_true,  help = "Creates a six-digit code summarizing ON-OFF comparison.")
+parser.add_argument('--beam', action = "store_true", help = "Creates a six-digit code summarizing ON-OFF comparison.")
 args = parser.parse_args()
 inputs = args.inputs
 on_files = args.signal
