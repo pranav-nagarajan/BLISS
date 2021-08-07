@@ -4,7 +4,7 @@ The Breakthrough Listen project aims to conduct a comprehensive search for radio
 
 Unfortunately, algorithms dedicated to search for such signals are computationally intensive. Furthermore, they typically rely on Fast Fourier Transform techniques, which are impacted by "red" (random walk) noise and perform poorly on modulation patterns with either a small duty cycle (<1%) or a long period (>500 milliseconds). This work aims to develop a pipeline for searching for periodic spectral signals based on the Fast Folding Algorithm, which displays improved performance in these regimes [2].
 
-The initial stage of the project will be to write a python wrapper that uses the blimpy [3] and riptide-ffa [4] packages, along with necessary plotting tools, to search for and analyze periodic spectral signals across all frequency channels in a single set of 5-minute observations. The next stage of the project involves developing tools to compare a set of ON and OFF observations for a sky-localized signal. The final stage of the project will be to test the pipeline on data collected by the BL program, in one of the first comprehensive searches for this class of signals.
+The initial stage of the project will be to write a python wrapper that uses the `blimpy` [3] and `riptide-ffa` [4] packages, along with necessary plotting tools, to search for and analyze periodic spectral signals across all frequency channels in a single set of 5-minute observations. The next stage of the project involves developing tools to compare a set of ON and OFF observations for a sky-localized signal. The final stage of the project will be to test the pipeline on data collected by the BL program, in one of the first comprehensive searches for this class of signals.
 
 ## Repository Organization
 
@@ -46,9 +46,21 @@ After implementing multiprocessing techniques, the pipeline was next tested on a
   
 ![Source B01](/Pictures/bl_output.png)
   
-The △ symbols denote detected periodic signals that are present both in the ON file and on of the three OFF files. As expected, the RFI is flagged, and the dominant periodicity at approximately 8 seconds stands out from the noise.
+The △ symbols denote detected periodic signals that are present both in the ON file and on of the three OFF files. As expected, the RFI is flagged, and the dominant periodicity at approximately 8 seconds stands out from the noise. 
+  
+Figure 5 below displays the output of `plotter.py` for a detected periodicity of approximately 8.5 seconds. A peak is evident in the periodogram of the third ON file, with a discernable signal appearing in the corresponding folded profile. Based on the vertical scales, this pattern was not detected in either of the other ON files, and is not present in any of the OFF files. 
+  
+![Source B01](/Pictures/bl_plot.png)
+  
+Note that seven bins were used to create the folded profiles seen above. A practical lower limit on the bin width is provided by the sampling time of the input data, which is approximately 1 second in the example chosen for this write-up.
 
 ## Next Steps
+  
+1. The logic for the generation of a six-digit code summarizing the ON-OFF comparison for a full cadence is present in the plotting script. However, the code generation takes too long to run. For this optional process to be carried out, speed-up is necessary.
+  
+2. Another useful feature would be the calculation of peak S/N ratio in the folded profile of a detected signal. This should be similar to the peak S/N ratio in the periodogram computed by `riptide` for the corresponding frequency channel.
+
+3. Of course, the main future goal of this project would be to apply the pipeline to large amounts of BL data to discover and report candidate wideband signals with periodic spectral modulation patterns. This will require the implementation of a clustering algorithm to determine whether a signal is present in neighboring frequency channels.
 
 ## References
 
