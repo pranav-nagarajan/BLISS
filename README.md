@@ -52,11 +52,11 @@ Figure 5 below displays the output of `plotter.py` for a detected periodicity of
   
 ![Source B01](/Pictures/bl_plot.png)
   
-Note that seven bins were used to create the folded profiles seen above. A practical lower limit on the bin width is provided by the sampling time of the input data, which is approximately 1 second in the example chosen for this write-up.
+Note that 7 bins were used to create the folded profiles seen above. A practical lower limit on the bin width is provided by the sampling time of the input data, which is approximately 1 second in the example chosen for this write-up.
 
 ## Next Steps
   
-1. The logic for the generation of a six-digit code summarizing the ON-OFF comparison for a full cadence is present in the plotting script. However, the code generation takes too long to run. For this optional process to be carried out, speed-up is necessary.
+1. The logic for the generation of a six-digit code summarizing the ON-OFF comparison for a full cadence is present in the plotting script. In the six-digit code, a 0 indicates that the detected signal is absent from the ON or OFF file, while a 1 indicates that the detected signal is present in the ON or OFF file. Currently, the code generation takes too long to run. For this optional process to be carried out, speed-up is necessary.
   
 2. Another useful feature would be the calculation of peak S/N ratio in the folded profile of a detected signal. This should be similar to the peak S/N ratio in the periodogram computed by `riptide` for the corresponding frequency channel.
 
