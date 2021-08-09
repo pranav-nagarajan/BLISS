@@ -40,7 +40,6 @@ if beam:
         semi = package[-1]
         codes.append("".join(map(lambda x, y: x + y, flags, semi)))
 
-
 signal_data = []
 for on_file in on_files:
     obs = Waterfall(on_file)
