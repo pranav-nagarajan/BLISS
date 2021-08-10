@@ -45,7 +45,7 @@ As a proof of concept, the analysis portion of the project was tested on a singl
  
 The + symbols denote harmonics of the dominant periodic signal, reinforcing the signal's validity. Vertical features in the plot correspond to periodic signals that are consistent across all frequency channels, while horizontal features generally arise due to radio frequency interference.
   
-After implementing multiprocessing techniques, the pipeline was next tested on a full six-file cadence from the Breakthrough Listen data archives. Figure 4 below displays the period-frequency space output for a typical ON file, which has a lower frequency resolution than the pulsar data mentioned above.
+After implementing multiprocessing techniques, the pipeline was next tested on a full six-file cadence from the Breakthrough Listen data archives. Figure 4 below displays the period-frequency space output for a typical ON file, which has a lower time resolution than the pulsar data mentioned above.
   
 ![Source B01](/Pictures/bl_output.png)
   
