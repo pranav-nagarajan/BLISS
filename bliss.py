@@ -61,10 +61,11 @@ def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cuto
             codes = np.zeros(len(on_periods), dtype = str)
             for j in range(len(off_data)):
                 if compress:
-                    off_bz = bz2.BZ2File('off_' + str(j) + '.pbz2', 'rb')
-                    datum = pickle.load(off_bz)
+                    off_bz = bz2.BZ2File(off_data[j])
+                    background = pickle.load(off_bz)
+                    datum = np.squeeze(background.data)
                 else:
-                    datum = off_data[j]
+                    datum = np.squeeze(off_data[j].data)
                 off_periods = periodic_helper(datum[:, i], freqs[i], tsamp, cutoff, False)
                 if beam:
                     indicator, codes = compare_on_off(on_periods, off_periods, indicator, codes)
@@ -251,15 +252,13 @@ if off_files is not None:
     back_count = 0
     for off_file in off_files:
         background = Waterfall(off_file)
-        background_data.append(background)
-        back_data = np.squeeze(background.data)
         if compress:
             file_name = 'off_' + str(back_count) + '.pbz2'
             with bz2.BZ2File(file_name, 'w') as f:
-                pickle.dump(back_data, f)
+                pickle.dump(background, f)
             background_data.append(file_name)
         else:
-            background_data.append(back_data)
+            background_data.append(background)
         back_count += 1
     print("Progress: Read OFF files.")
 
