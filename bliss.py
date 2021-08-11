@@ -56,7 +56,6 @@ def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cuto
             codes = np.zeros(len(on_periods), dtype = str)
             for j in range(len(off_data)):
                 datum = off_data[j]
-                datum = Waterfall(datum)
                 datum = np.squeeze(datum.data)
                 off_periods = periodic_helper(datum[:, i], freqs[i], tsamp, cutoff, False)
                 if beam:
@@ -238,22 +237,23 @@ if simulate:
     injection = np.random.choice(freqs, 10, replace = False)
 print("Progress: Read ON file.")
 
-#background_data = None
-#if off_files is not None:
-#    background_data = []
-#    for off_file in off_files:
-#        background = Waterfall(off_file)
+background_data = None
+if off_files is not None:
+    background_data = []
+    for off_file in off_files:
+        background = Waterfall(off_file)
+        background_data.append(background)
 #        back_data = np.squeeze(background.data)
 #        background_data.append(back_data)
-#    print("Progress: Read OFF files.")
+    print("Progress: Read OFF files.")
 
 if multi:
     pool = mp.Pool(mp.cpu_count())
-    on_iterables = [(data, off_files, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), cutoff) for i in range(1, 9)]
+    on_iterables = [(data, background_data, freqs, nchans, tsamp, 0.1 * i, 0.1 * (i + 1), cutoff) for i in range(1, 9)]
     on_results = pool.starmap(periodic_analysis, on_iterables)
     on_results = concat_helper(on_results)
 else:
-    on_results = periodic_analysis(data, off_files, freqs, nchans, tsamp, 0.1, 0.9, cutoff)
+    on_results = periodic_analysis(data, background_data, freqs, nchans, tsamp, 0.1, 0.9, cutoff)
     on_results = concat_helper([on_results])
 
 ranked, counts, harmonics = find_harmonics(on_results[0], on_results[3], num_periods)
