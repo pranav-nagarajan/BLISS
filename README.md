@@ -20,6 +20,9 @@ The initial stage of the project will be to write a python wrapper that uses the
 - `simulation.py`
   - A script containing functionality for injecting periodic signals into an ON file, and testing to see if they are recovered by the FFA algorithm. Since this functionality has now been included as an option in the main script, this code is currently not used in the pipeline.
 
+- `bliss.sh`
+  - A shell script containing the entire pipeline for the BLISS project. It accepts as input a full ON-OFF-ON-OFF-ON-OFF cadence, and runs `bliss.py` three times with each of the ON files and all of the OFF files. Then, it feeds the output text files into `plotter.py`, which combines them and generates a 6x2 plot for each detected signal.
+
 ## FFA Algorithm
 
 Consider an evenly sampled time series containing <em>m</em> cycles of a pulsed periodic signal with integer period <em>p</em>. This data can be represented as a two-dimensional array with <em>m</em> rows and <em>p</em> columns. Each row represents a cycle; since all pulses are vertically aligned, phase-coherent folding can be achieved by summing across all of the rows.
@@ -42,7 +45,7 @@ As a proof of concept, the analysis portion of the project was tested on a singl
  
 The + symbols denote harmonics of the dominant periodic signal, reinforcing the signal's validity. Vertical features in the plot correspond to periodic signals that are consistent across all frequency channels, while horizontal features generally arise due to radio frequency interference.
   
-After implementing multiprocessing techniques, the pipeline was next tested on a full six-file cadence from the Breakthrough Listen data archives. Figure 4 below displays the period-frequency space output for a typical ON file, which has a lower frequency resolution than the pulsar data mentioned above.
+After implementing multiprocessing techniques, the pipeline was next tested on a full six-file cadence from the Breakthrough Listen data archives. Figure 4 below displays the period-frequency space output for a typical ON file, which has a lower time resolution than the pulsar data mentioned above.
   
 ![Source B01](/Pictures/bl_output.png)
   
