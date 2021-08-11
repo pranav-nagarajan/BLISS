@@ -12,7 +12,7 @@ parser.add_argument('--inputs', action = "append", type = str, help = "Location 
 parser.add_argument('--signal', action = "append", type = str, help = "Location of 'ON' data.")
 parser.add_argument('--background', action = "append", type = str, help = "Location of 'OFF' data.")
 parser.add_argument('--range', type = float, nargs = 2, default = [2.5, 10], help = 'Period range for FFA search.')
-parser.add_argument('--bins', type = int, default = 10, help = "Number of bins for folded profile.")
+parser.add_argument('--bins', type = int, default = 100, help = "Number of bins for folded profile.")
 parser.add_argument('--beam', action = "store_true", help = "Creates a six-digit code summarizing ON-OFF comparison.")
 args = parser.parse_args()
 inputs = args.inputs
@@ -60,7 +60,7 @@ nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 flag = False
 for package in input:
 
-    fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, figsize = (20, 20))
+    fig, axes = plt.subplots(len(signal_data) + len(background_data), 2, sharey = 'col', figsize = (20, 20))
     channel =  np.where(freqs == float(package[1]))[0][0]
 
     sig_index, back_index, counter = 0, 0, 0
