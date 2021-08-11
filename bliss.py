@@ -4,6 +4,9 @@ import matplotlib.colors
 import pandas as pd
 
 import argparse
+import pickle
+import bz2
+
 import time
 from tqdm import tqdm
 import multiprocessing as mp
@@ -17,8 +20,9 @@ parser.add_argument('signal', type = str, help = 'Location of ON data file.')
 parser.add_argument('--background', action = "append", type = str, default = None, help = 'Location of OFF data file.')
 parser.add_argument('--cutoff', type = int, default = 10, help = 'SNR cutoff value.')
 parser.add_argument('--alias', type = int, default = 1, help = 'Number of periods to check for harmonics.')
-parser.add_argument('--range', type = float, nargs = 2, default = [2.5, 10], help = 'Period range for FFA search.')
+parser.add_argument('--range', type = float, nargs = 2, default = [0.1, 10], help = 'Period range for FFA search.')
 parser.add_argument('--multi', action = "store_true", help = 'Use multiprocessing.')
+parser.add_argument('--compress', action = "store_true", help = "Compress OFF file data.")
 parser.add_argument('--simulate', action = "store_true", help = 'Turns on simulation of fake signal.')
 parser.add_argument('--beam', action = "store_true", help = 'Creates a three-digit code summarizing ON-OFF comparison.')
 parser.add_argument('--output', type = str, default = "signal.txt", help = 'Name of output file.')
@@ -29,6 +33,7 @@ cutoff = args.cutoff
 num_periods = args.alias
 period_range = args.range
 multi = args.multi
+compress = args.compress
 simulate = args.simulate
 beam = args.beam
 output = args.output
@@ -55,8 +60,11 @@ def periodic_analysis(on_data, off_data, freqs, nchans, tsamp, start, stop, cuto
             indicator = np.zeros(len(on_periods))
             codes = np.zeros(len(on_periods), dtype = str)
             for j in range(len(off_data)):
-                datum = off_data[j]
-                datum = np.squeeze(datum.data)
+                if compress:
+                    off_bz = bz2.BZ2File('off_' + str(j) + '.pbz2', 'rb')
+                    datum = pickle.load(off_bz)
+                else:
+                    datum = off_data[j]
                 off_periods = periodic_helper(datum[:, i], freqs[i], tsamp, cutoff, False)
                 if beam:
                     indicator, codes = compare_on_off(on_periods, off_periods, indicator, codes)
@@ -240,11 +248,19 @@ print("Progress: Read ON file.")
 background_data = None
 if off_files is not None:
     background_data = []
+    back_count = 0
     for off_file in off_files:
         background = Waterfall(off_file)
         background_data.append(background)
-#        back_data = np.squeeze(background.data)
-#        background_data.append(back_data)
+        back_data = np.squeeze(background.data)
+        if compress:
+            file_name = 'off_' + str(back_count) + '.pbz2'
+            with bz2.BZ2File(file_name, 'w') as f:
+                pickle.dump(back_data, f)
+            background_data.append(file_name)
+        else:
+            background_data.append(back_data)
+        back_count += 1
     print("Progress: Read OFF files.")
 
 if multi:
