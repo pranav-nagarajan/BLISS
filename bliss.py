@@ -95,7 +95,7 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
     time_series = TimeSeries.from_numpy_array(data, tsamp = tsamp)
     if on and simulate and frequency in injection:
         time_series = time_series.normalise()
-        fts = TimeSeries.generate(length=len(data)*tsamp, tsamp=tsamp, period=50.0, ducy=0.02, amplitude=100.0).normalise()
+        fts = TimeSeries.generate(length=len(data)*tsamp, tsamp=tsamp, period=8.0, ducy=0.02, amplitude=100.0).normalise()
         time_series = TimeSeries.from_numpy_array(time_series.data + fts.data, tsamp = tsamp).normalise()
     ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=period_range[0], period_max=period_range[1], bins_min=2, bins_max=260)
     mask = pgram.snrs.max(axis = 1) >= cutoff
