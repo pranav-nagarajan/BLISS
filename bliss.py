@@ -93,10 +93,11 @@ def periodic_helper(data, frequency, tsamp, cutoff, on = True):
     best_periods = []
 
     time_series = TimeSeries.from_numpy_array(data, tsamp = tsamp)
-    if on and simulate and frequency in injection:
+    if on and simulate:
         time_series = time_series.normalise()
-        fts = TimeSeries.generate(length=len(data)*tsamp, tsamp=tsamp, period=50.0, ducy=0.02, amplitude=100.0).normalise()
-        time_series = TimeSeries.from_numpy_array(time_series.data + fts.data, tsamp = tsamp).normalise()
+        if frequency in injection:
+            fts = TimeSeries.generate(length=len(data)*tsamp, tsamp=tsamp, period=5.0, ducy=0.02, amplitude=100.0).normalise()
+            time_series = TimeSeries.from_numpy_array(time_series.data + fts.data, tsamp = tsamp).normalise()
     ts, pgram = ffa_search(time_series, rmed_width=4.0, period_min=period_range[0], period_max=period_range[1], bins_min=2, bins_max=260)
     mask = pgram.snrs.max(axis = 1) >= cutoff
     periods = pgram.periods[mask]
@@ -233,7 +234,7 @@ freqs = np.array([obs.header['fch1'] + i * obs.header['foff'] for i in range(obs
 nchans, tsamp = obs.header['nchans'], obs.header['tsamp']
 
 if simulate:
-    injection = np.random.choice(freqs, 10, replace = False)
+    injection = np.random.choice(freqs, 1, replace = False)
 print("Progress: Read ON file.")
 
 background_data = None
