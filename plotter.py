@@ -64,7 +64,7 @@ if beam:
         codes.append("".join(map(lambda x, y: x + y, on_code, off_code)))
 
     final_df = pd.DataFrame({'Period' : unique_periods, 'Frequency' : unique_freqs, 'Code' : codes})
-    df.to_csv('codes.txt', sep = ' ', index = False, header = False)
+    final_df.to_csv('codes.txt', sep = ' ', index = False, header = False)
 
 signal_data = []
 for on_file in on_files:
