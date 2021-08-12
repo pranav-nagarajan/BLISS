@@ -66,9 +66,9 @@ Note that 7 bins were used to create the folded profiles seen above. A practical
 
 ## Next Steps
   
-1. A useful feature would be the calculation of peak S/N ratio in the folded profile of a detected signal. This should be similar to the peak S/N ratio in the periodogram computed by `riptide-ffa` for the corresponding frequency channel.
+1. A useful feature would be the calculation of the peak S/N ratio in the folded profile of a detected signal. This should be similar to the peak S/N ratio in the periodogram computed by `riptide-ffa` for the corresponding frequency channel.
 
-2. Another useful tool would be the implementation of a clustering algorithm to determine whether a signal is present in multiple neighboring frequency channels. This would help further characterize wideband signal.
+2. Another useful tool would be the implementation of a clustering algorithm to determine whether a signal is present in multiple neighboring frequency channels. This would help further characterize wideband signals.
 
 3. Finally, the main future goal of this project would be to apply the pipeline to large amounts of Breakthrough Listen data to discover and report candidate wideband signals with periodic spectral modulation patterns.
 
