@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+
 import argparse
 import time
 
@@ -22,23 +24,47 @@ period_range = args.range
 num_bins = args.bins
 beam = args.beam
 
+input_count, origins = 0, []
 full_input = []
 for name in inputs:
-    full_input.extend(np.loadtxt(name, dtype = str))
-input = list(set([tuple(arr) for arr in full_input]))
+    loaded = np.loadtxt(name, dtype = str)
+    origins.extend([input_count for l in loaded])
+    full_input.extend(loaded)
+    input_count += 1
+input_names = ['Period', 'Frequency', 'SNR', 'Channel', 'Bandwidth', 'Harmonics', 'Min Period', 'Max Period']
+input_names.extend(['Best Width', 'Min Width', 'Max Width', 'Source', 'MJD', 'Filename'])
+if beam:
+    input_names.append('Code')
+df = pd.DataFrame(full_input, columns = input_names)
+input = list(set([tuple(lst[:2]) for lst in full_input]))
 
 if beam:
+    short_df = df[['Period', 'Frequency']]
+    df_codes = df['Code'].values
+    duplicates = df.groupby(input_names).apply(lambda x: tuple(x.index)).tolist()
+
+    unique_periods, unique_freqs = [], []
     codes = []
-    for package in input:
-        flags = ''
-        for name in inputs:
-            curr = np.loadtxt(name, dtype = str)
-            if package in curr:
-                flags += '1'
+    for tup in duplicates:
+        unique_periods.append(short_df.iloc[tup[0], 0])
+        unique_freqs.append(short_df.iloc[tup[0], 1])
+        on_flags = []
+        off_code = '000'
+        for ind in tup:
+            if df_codes[ind].count('1') > off_code.count('1'):
+                off_code = df_codes[ind]
+            on_flags.append(origins[ind])
+
+        on_code = ''
+        for flag in [0, 1, 2]:
+            if flag in on_flags:
+                on_code += '1'
             else:
-                flags += '0'
-        semi = package[-1]
-        codes.append("".join(map(lambda x, y: x + y, flags, semi)))
+                on_code += '0'
+        codes.append("".join(map(lambda x, y: x + y, on_code, off_code)))
+
+    final_df = pd.DataFrame({'Period' : unique_periods, 'Frequency' : unique_freqs, 'Code' : codes})
+    df.to_csv('codes.txt', sep = ' ', index = False, header = False)
 
 signal_data = []
 for on_file in on_files:
@@ -96,8 +122,6 @@ for package in input:
 
     if not flag:
         plt.savefig('plot.png')
-        if beam:
-            np.savetxt('codes.txt', codes)
         flag = True
         end = time.time()
         print('Time Taken: ', end - start)
